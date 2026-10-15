@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MTGA Stats</title>
+<link rel="stylesheet" href="style.css">
+<script src="lib/chart.umd.js"></script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 2 3 7v10l9 5 9-5V7l-9-5Zm0 2.3 6.8 3.8L12 11.9 5.2 8.1 12 4.3ZM5 9.8l6 3.4v6.6l-6-3.3V9.8Zm8 10v-6.6l6-3.4v6.7l-6 3.3Z"/></svg>
+      <span>MTGA Stats</span>
+    </div>
+    <nav id="nav">
+      <button data-page="overview" class="active">Visão geral</button>
+      <button data-page="formats">Formatos</button>
+      <button data-page="decks">Decks</button>
+      <button data-page="cards">Cartas</button>
+      <button data-page="opponents">Oponentes</button>
+      <button data-page="matches">Partidas</button>
+    </nav>
+    <div class="side-foot">
+      <div id="player" class="player"></div>
+      <div id="rank" class="rank"></div>
+      <button id="btn-refresh" class="btn primary">Atualizar dados</button>
+      <button id="btn-import" class="btn ghost">Importar log…</button>
+      <div class="row-between">
+        <span id="status" class="muted small"></span>
+        <button id="btn-theme" class="icon-btn" title="Alternar tema" aria-label="Alternar tema">◐</button>
+      </div>
+    </div>
+  </aside>
+
+  <main>
+    <header class="filters" id="filters">
+      <label>Formato <select id="f-format"></select></label>
+      <label>Fila <select id="f-queue"></select></label>
+      <label>Melhor de <select id="f-bo"><option value="">Todos</option><option value="Bo1">Bo1</option><option value="Bo3">Bo3</option></select></label>
+      <label>Período <select id="f-period">
+        <option value="0">Todo o histórico</option>
+        <option value="1">Hoje</option>
+        <option value="7">Últimos 7 dias</option>
+        <option value="30">Últimos 30 dias</option>
+        <option value="90">Últimos 90 dias</option>
+      </select></label>
+      <label>Deck <select id="f-deck"></select></label>
+      <span class="spacer"></span>
+      <span id="filter-count" class="muted small"></span>
+    </header>
+
+    <div id="banner" class="banner" hidden></div>
+
+    <section class="page" id="page-overview">
+      <div class="kpis" id="kpis"></div>
+      <div class="grid g-2-1">
+        <div class="card"><div class="card-h"><h3>Resultados por dia</h3><div class="legend" id="lg-daily"></div></div><div class="chart h260"><canvas id="c-daily"></canvas></div></div>
+        <div class="card"><div class="card-h"><h3>Vitórias × derrotas</h3></div><div class="chart h260"><canvas id="c-donut"></canvas></div></div>
+      </div>
+      <div class="grid g-2-1">
+        <div class="card"><div class="card-h"><h3>Taxa de vitória ao longo do tempo</h3><span class="muted small">acumulada e média móvel das últimas 10</span></div><div class="chart h240"><canvas id="c-trend"></canvas></div></div>
+        <div class="card"><div class="card-h"><h3>Play × Draw</h3><span class="muted small">por jogo</span></div><div class="chart h240"><canvas id="c-play"></canvas></div></div>
+      </div>
+      <div class="grid g-1-1">
+        <div class="card"><div class="card-h"><h3>Taxa de vitória por formato</h3></div><div class="chart" id="w-fmt"><canvas id="c-fmt"></canvas></div></div>
+        <div class="card"><div class="card-h"><h3>Decks mais usados</h3><div class="legend" id="lg-topdecks"></div></div><div class="chart" id="w-topdecks"><canvas id="c-topdecks"></canvas></div></div>
+      </div>
+    </section>
+
+    <section class="page" id="page-formats" hidden>
+      <div class="grid g-1-1">
+        <div class="card"><div class="card-h"><h3>Partidas por formato</h3></div><div class="chart h280"><canvas id="c-fmtshare"></canvas></div></div>
+        <div class="card"><div class="card-h"><h3>Vitórias e derrotas por formato</h3><div class="legend" id="lg-fmtwl"></div></div><div class="chart" id="w-fmtwl"><canvas id="c-fmtwl"></canvas></div></div>
+      </div>
+      <div class="card"><div class="card-h"><h3>Resumo por formato</h3></div><div class="table-wrap" id="t-formats"></div></div>
+      <div class="card"><div class="card-h"><h3>Resumo por evento</h3><span class="muted small">nome interno da fila no Arena</span></div><div class="table-wrap" id="t-events"></div></div>
+    </section>
+
+    <section class="page" id="page-decks" hidden>
+      <div id="deck-list">
+        <div class="card"><div class="card-h"><h3>Seus decks</h3><span class="muted small">clique em um deck para ver os detalhes</span></div><div class="table-wrap" id="t-decks"></div></div>
+      </div>
+      <div id="deck-detail" hidden></div>
+    </section>
+
+    <section class="page" id="page-cards" hidden>
+      <div class="toolbar">
+        <div class="seg" id="cards-side">
+          <button data-side="me" class="active">Minhas cartas</button>
+          <button data-side="opp">Cartas dos oponentes</button>
+        </div>
+        <input id="cards-search" type="search" placeholder="Buscar carta…">
+        <label class="muted small">Mín. de jogos <select id="cards-min"><option>1</option><option selected>2</option><option>3</option><option>5</option><option>10</option></select></label>
+        <label class="muted small"><input type="checkbox" id="cards-lands"> incluir terrenos</label>
+      </div>
+      <div class="grid g-1-1">
+        <div class="card"><div class="card-h"><h3 id="cards-chart-title">Cartas mais vistas</h3></div><div class="chart" id="w-cards"><canvas id="c-cards"></canvas></div></div>
+        <div class="card"><div class="card-h"><h3>Curva de mana</h3><span class="muted small">cartas distintas vistas, sem terrenos</span></div><div class="chart h300"><canvas id="c-curve"></canvas></div></div>
+      </div>
+      <div class="card"><div class="card-h"><h3 id="cards-table-title">Desempenho por carta</h3><span class="muted small" id="cards-hint"></span></div><div class="table-wrap" id="t-cards"></div></div>
+    </section>
+
+    <section class="page" id="page-opponents" hidden>
+      <div class="grid g-1-1">
+        <div class="card"><div class="card-h"><h3>Sua taxa de vitória contra cada combinação de cores</h3></div><div class="chart" id="w-oppcol"><canvas id="c-oppcol"></canvas></div></div>
+        <div class="card"><div class="card-h"><h3>Cores mais enfrentadas</h3><span class="muted small">presença de cada cor nos decks adversários</span></div><div class="chart h300"><canvas id="c-oppmono"></canvas></div></div>
+      </div>
+      <div class="grid g-1-1">
+        <div class="card"><div class="card-h"><h3>Por combinação de cores</h3></div><div class="table-wrap" id="t-oppcol"></div></div>
+        <div class="card"><div class="card-h"><h3>Oponentes repetidos</h3></div><div class="table-wrap" id="t-oppnames"></div></div>
+      </div>
+    </section>
+
+    <section class="page" id="page-matches" hidden>
+      <div class="card"><div class="card-h"><h3>Histórico de partidas</h3><span class="muted small">clique em uma partida para ver as cartas</span></div><div class="table-wrap" id="t-matches"></div></div>
+    </section>
+  </main>
+</div>
+<div id="card-preview" class="card-preview" hidden><img alt=""></div>
+<div id="tip" class="tip" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>
