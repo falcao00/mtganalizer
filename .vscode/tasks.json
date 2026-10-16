@@ -1,0 +1,30 @@
+{
+  // Ctrl+Shift+B gera dist\MTGA Stats.exe
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Instalar dependências",
+      "type": "shell",
+      "command": "if (-not (Test-Path .venv\\Scripts\\python.exe)) { python -m venv .venv }; .venv\\Scripts\\python -m pip install -q -r requirements.txt pyinstaller",
+      "options": { "shell": { "executable": "powershell.exe", "args": ["-NoProfile", "-Command"] } },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build exe",
+      "type": "process",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\pyinstaller.exe",
+      "args": ["--noconfirm", "--onefile", "--windowed", "--name", "MTGA Stats", "--add-data", "web:web", "app.py"],
+      "dependsOn": "Instalar dependências",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "Rodar app",
+      "type": "process",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "args": ["app.py"],
+      "dependsOn": "Instalar dependências",
+      "problemMatcher": []
+    }
+  ]
+}

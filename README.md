@@ -54,6 +54,16 @@ python -m venv .venv
 Dê dois cliques em **`build_exe.bat`**. Ao final aparece **`dist\MTGA Stats.exe`**, um arquivo único
 que roda sem Python. Pode copiá-lo para qualquer lugar ou criar um atalho na área de trabalho.
 
+### Opção C: pelo VS Code
+
+Abra a pasta do projeto no VS Code:
+
+- **Ctrl+Shift+B** gera o executável (`dist\MTGA Stats.exe`). Na primeira vez também cria o `.venv`
+  e instala as dependências.
+- **F5** abre o app com o depurador (precisa da extensão **Python** da Microsoft). Escolha
+  "MTGA Stats (com DevTools)" para inspecionar a interface.
+- Em **Terminal → Executar Tarefa…** também há a tarefa **Rodar app**.
+
 > **Importante:** mantenha a pasta do projeto num local comum, como Documentos ou Downloads.
 > Pastas internas de aplicativos empacotados (por exemplo, dentro de `AppData\Local\Packages`)
 > impedem a janela de carregar o WebView2.
@@ -91,7 +101,7 @@ A barra no topo filtra **todas** as telas ao mesmo tempo:
 
 | Tela | O que mostra |
 |---|---|
-| **Visão geral** | Partidas, taxa de vitória, jogos (games), sequência atual, resultados por dia, evolução da taxa de vitória, Play × Draw, com/sem mulligan, taxa por formato e decks mais usados |
+| **Visão geral** | Partidas, taxa de vitória, jogos (games), sequência atual, resultados por dia, evolução da taxa de vitória, Play × Draw, taxa por formato e decks mais usados |
 | **Formatos** | Quanto você joga cada formato, vitórias e derrotas por formato, resumo por formato e por evento |
 | **Decks** | Tabela com todos os seus decks. **Clique num deck** para ver a evolução, o desempenho contra cada combinação de cores e o impacto de cada carta |
 | **Cartas** | Alterne entre **Minhas cartas** e **Cartas dos oponentes**: em quantos jogos apareceram, sua taxa de vitória e a curva de mana. Use a busca e o mínimo de jogos para filtrar |

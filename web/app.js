@@ -54,12 +54,24 @@ const sortColors = s => "WUBRG".split("").filter(c => s.includes(c)).join("");
 const comboName = c => COMBOS[c] || `${c.length} cores`;
 const card = id => state.data.cards[String(id)];
 
+/* Cores que o deck realmente exige, pelos símbolos de mana: um híbrido como {(G/W)}
+   só acrescenta cor se nenhuma das opções já estiver no deck; {(2/B)} é ignorado. */
 function colorsOf(ids) {
-  let s = "";
+  const pure = new Set(), hybrids = [];
   for (const id of ids) {
     const c = card(id);
-    if (c && !c.is_land) s += c.colors;
+    if (!c || c.is_land) continue;
+    const syms = (c.cost || "").match(/\{[^}]+\}/g) || [];
+    if (!syms.length) { for (const x of c.colors) pure.add(x); continue; }
+    for (const s of syms) {
+      const opts = s.replace(/[{}()]/g, "").split("/");
+      const cols = opts.filter(o => o.length === 1 && "WUBRG".includes(o));
+      if (opts.includes("P") || cols.length === 1 && opts.length === 1) cols.forEach(x => pure.add(x));
+      else if (cols.length > 1) hybrids.push(cols);
+    }
   }
+  let s = [...pure].join("");
+  for (const h of hybrids) if (!h.some(x => pure.has(x))) s += h.join("");
   return sortColors(s);
 }
 
@@ -440,13 +452,11 @@ function renderOverview() {
 
   trendLine("c-trend", ms);
 
-  // play/draw/mulligan por jogo
+  // play/draw por jogo
   const gstat = gs => { const w = gs.filter(g => g.result === "win").length, l = gs.filter(g => g.result === "loss").length; return { w, l, n: w + l, wr: w + l ? w / (w + l) : null }; };
   const pd = [
     { label: "Play", s: gstat(games.filter(g => g.on_play === true)) },
     { label: "Draw", s: gstat(games.filter(g => g.on_play === false)) },
-    { label: "Sem mulligan", s: gstat(games.filter(g => !g.my_mulligans)) },
-    { label: "Com mulligan", s: gstat(games.filter(g => g.my_mulligans > 0)) },
   ];
   wrBars("c-play", null, pd, { horizontal: false });
   if (state.charts["c-play"]) {
@@ -741,8 +751,7 @@ function renderOpponents() {
 /* ----------------------------------------------------------------- partidas */
 function renderMatches() {
   const rows = state.filtered.map(m => ({ ...m, ts: m.date.getTime(),
-    dur: m.end && m.start ? (m.end - m.start) / 60 : null, score: `${m.gw}–${m.gl}`,
-    play: m.games[0]?.on_play }));
+    score: `${m.gw}–${m.gl}`, play: m.games[0]?.on_play }));
   table("#t-matches", [
     { key: "ts", label: "Data", html: r => fmtDateTime(r.date) },
     { key: "result", label: "Resultado", html: r => resultBadge(r.result) },
@@ -754,11 +763,8 @@ function renderMatches() {
     { key: "score", label: "Jogos", num: true },
     { key: "play", label: "Início", html: r => r.play == null ? "—" : r.play ? "Play" : "Draw" },
     { key: "turns", label: "Turnos", num: true },
-    { key: "dur", label: "Duração", num: true, html: r => r.dur ? `${Math.round(r.dur)} min` : "—" },
-    { key: "reason", label: "Fim", html: r => esc(REASONS[r.reason] || r.reason || "") },
   ], rows, { sortKey: "ts", onRow: toggleMatch });
 }
-const REASONS = { Concede: "Concessão", Timeout: "Tempo esgotado", Default: "Normal", Game: "Normal", LifeTotal: "Vida", Deck: "Sem cartas", Damage: "Dano" };
 
 function toggleMatch(m, tr) {
   const next = tr.nextElementSibling;
