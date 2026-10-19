@@ -21,6 +21,7 @@
       <button data-page="cards">Cartas</button>
       <button data-page="opponents">Oponentes</button>
       <button data-page="matches">Partidas</button>
+      <button data-page="limited">Limitado</button>
     </nav>
     <div class="side-foot">
       <div id="player" class="player"></div>
@@ -115,6 +116,11 @@
 
     <section class="page" id="page-matches" hidden>
       <div class="card"><div class="card-h"><h3>Histórico de partidas</h3><span class="muted small">clique em uma partida para ver as cartas</span></div><div class="table-wrap" id="t-matches"></div></div>
+    </section>
+
+    <section class="page" id="page-limited" hidden>
+      <div class="kpis" id="limited-kpis"></div>
+      <div class="card"><div class="card-h"><h3>Drafts realizados</h3><span class="muted small">clique em um draft para ver as partidas</span></div><div class="table-wrap" id="t-limited"></div></div>
     </section>
   </main>
 </div>

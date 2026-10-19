@@ -78,7 +78,8 @@ function colorsOf(ids) {
 function enrich(m) {
   m.fmt = formatOf(m);
   m.queue = queueOf(m);
-  m.bo = /BestTwoOutOfThree/i.test(m.winCondition || "") ? "Bo3" : "Bo1";
+  m.bo = /Best2of3|BestTwoOutOfThree/i.test(m.winCondition || "") ? "Bo3" : "Bo1";
+  m.limited = limitedInfo(m.event);
   m.date = new Date((m.start || m.end || 0) * 1000);
   const deckIds = [...m.main, ...m.command].map(x => x[0]);
   m.myColors = colorsOf(m.command.length ? m.command.map(x => x[0]) : deckIds) || colorsOf(deckIds);
@@ -359,7 +360,7 @@ function table(el, cols, rows, { onRow, sortKey, sortDir = -1, rowAttrs } = {}) 
   }
   if (!rows.length) { el.innerHTML = `<div class="empty" style="height:80px">Nada para mostrar no filtro atual</div>`; return; }
   el.innerHTML = `<table><thead><tr>${cols.map(c =>
-    `<th data-k="${c.key}" class="${c.num ? "num" : ""} ${st.key === c.key ? "sorted" + (st.dir > 0 ? " asc" : "") : ""}">${c.label}</th>`).join("")}</tr></thead>
+    `<th data-k="${c.key}" class="${c.num ? "num" : ""} ${c.cls === "center" ? "center" : ""} ${st.key === c.key ? "sorted" + (st.dir > 0 ? " asc" : "") : ""}">${c.label}</th>`).join("")}</tr></thead>
     <tbody>${rows.map((r, i) => `<tr data-i="${i}" class="${onRow ? "clickable" : ""}" ${rowAttrs ? rowAttrs(r) : ""}>${cols.map(c =>
       `<td class="${c.num ? "num" : ""} ${c.cls || ""}">${c.html ? c.html(r) : esc(r[c.key])}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
   $$("th", el).forEach(th => th.onclick = () => {
@@ -784,8 +785,77 @@ function toggleMatch(m, tr) {
     </div></td></tr>`);
 }
 
+/* ----------------------------------------------------------------- limitado */
+const LIMITED_TYPES = [
+  [/QuickDraft/i, "Quick Draft"], [/PremierDraft/i, "Premier Draft"], [/Trad(itional)?_?Draft/i, "Draft tradicional"],
+  [/Trad(itional)?_?Sealed/i, "Selado tradicional"], [/Sealed/i, "Selado"], [/Draft/i, "Draft"],
+];
+/* "QuickDraft_FRA_20261008" -> { type: "Quick Draft", set: "FRA" } */
+function limitedInfo(event) {
+  const t = LIMITED_TYPES.find(([re]) => re.test(event || ""));
+  if (!t) return null;
+  const parts = event.split("_");
+  const after = parts.slice(parts.findIndex(p => /Draft|Sealed/i.test(p)) + 1);
+  const set = after.find(p => /^[A-Z][A-Z0-9]{1,4}$/.test(p)) || after[0] || "?";
+  return { type: t[1], set };
+}
+
+const MAX_WINS = 7;   // vitórias que completam um draft
+
+function renderLimited() {
+  const ms = state.filtered.filter(m => m.limited);
+  // cada campanha = evento + deck (cada draft gera um deck novo)
+  const runs = [...groupBy(ms, m => `${m.event}|${m.deckId || m.deckName}`)].map(([key, v]) => {
+    v.sort((a, b) => a.date - b.date);
+    const s = wl(v), last = v[v.length - 1];
+    return { key, matches: v, ts: v[0].date.getTime(), date: v[0].date, set: last.limited.set, type: last.limited.type,
+      bo: last.bo, colors: last.myColors, deckName: last.deckName, n: s.n, w: s.w, l: s.l, wr: s.wr,
+      record: `${s.w}–${s.l}`, gw: v.reduce((a, m) => a + m.gw, 0), gl: v.reduce((a, m) => a + m.gl, 0) };
+  });
+
+  const s = wl(ms);
+  const best = runs.reduce((a, r) => (!a || r.w > a.w || (r.w === a.w && r.l < a.l)) ? r : a, null);
+  const kpi = (label, value, sub = "") => `<div class="kpi"><div class="label">${label}</div><div class="value">${value}</div><div class="sub">${sub}</div></div>`;
+  $("#limited-kpis").innerHTML = [
+    kpi("Drafts", num(runs.length), `${num(s.n)} partidas · <span class="star" title="drafts com ${MAX_WINS} vitórias">★</span> ${runs.filter(r => r.w >= MAX_WINS).length}`),
+    kpi("Vitórias–Derrotas", `${s.w}–${s.l}`, `taxa de vitória ${pct(s.wr)}`),
+    kpi("Média de vitórias", runs.length ? (s.w / runs.length).toFixed(1) : "—", "por draft"),
+    kpi("Melhor campanha", best ? best.record : "—", best ? `${best.set} · ${comboName(best.colors)}` : "&nbsp;"),
+  ].join("");
+
+  table("#t-limited", [
+    { key: "ts", label: "Data", html: r => fmtDateTime(r.date) },
+    { key: "set", label: "Coleção", html: r => `<b>${esc(r.set)}</b>` },
+    { key: "type", label: "Tipo", html: r => `${esc(r.type)} <span class="muted">${r.bo}</span>` },
+    { key: "colors", label: "Cores do deck", html: r => `${pips(r.colors)} ${esc(comboName(r.colors))}` },
+    { key: "star", label: "Estrela", cls: "center", sort: r => r.w >= MAX_WINS ? 1 : 0,
+      html: r => r.w >= MAX_WINS ? `<span class="star" title="Draft completo: ${MAX_WINS} vitórias">★</span>` : "" },
+    { key: "w", label: "Vitórias–Derrotas", num: true, html: r => `<b>${r.record}</b>` },
+    { key: "gw", label: "Jogos", num: true, html: r => `${r.gw}–${r.gl}` },
+    { key: "wr", label: "% Vitória", num: true, html: r => wrCell(r.wr) },
+  ], runs, { sortKey: "ts", onRow: toggleRun });
+  if (!runs.length) $("#t-limited").innerHTML = `<div class="empty" style="height:120px">Nenhuma partida de draft ou selado no filtro atual.<br>Jogue um evento limitado no Arena e clique em Atualizar dados.</div>`;
+}
+
+function toggleRun(run, tr) {
+  const next = tr.nextElementSibling;
+  if (next && next.classList.contains("detail")) { next.remove(); return; }
+  tr.insertAdjacentHTML("afterend", `<tr class="detail"><td colspan="${tr.children.length}"><div class="run-matches"></div></td></tr>`);
+  const box = $(".run-matches", tr.nextElementSibling);
+  const rows = run.matches.map(m => ({ ...m, ts: m.date.getTime(), score: `${m.gw}–${m.gl}`, play: m.games[0]?.on_play }));
+  table(box, [
+    { key: "ts", label: "Data", html: r => fmtDateTime(r.date) },
+    { key: "result", label: "Resultado", html: r => resultBadge(r.result) },
+    { key: "opponent", label: "Oponente", cls: "name" },
+    { key: "oppColors", label: "Cores do oponente", html: r => r.oppSeen.size ? pips(r.oppColors) : "<span class='muted'>—</span>" },
+    { key: "score", label: "Jogos", num: true },
+    { key: "play", label: "Início", html: r => r.play == null ? "—" : r.play ? "Play" : "Draw" },
+    { key: "turns", label: "Turnos", num: true },
+  ], rows, { sortKey: "ts", sortDir: 1, onRow: toggleMatch });
+}
+
 /* --------------------------------------------------------------- navegação */
-const RENDER = { overview: renderOverview, formats: renderFormats, decks: renderDecks, cards: renderCards, opponents: renderOpponents, matches: renderMatches };
+const RENDER = { overview: renderOverview, formats: renderFormats, decks: renderDecks, cards: renderCards, opponents: renderOpponents, matches: renderMatches, limited: renderLimited };
 
 function render() {
   if (!state.data) return;

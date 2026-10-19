@@ -107,6 +107,7 @@ A barra no topo filtra **todas** as telas ao mesmo tempo:
 | **Cartas** | Alterne entre **Minhas cartas** e **Cartas dos oponentes**: em quantos jogos apareceram, sua taxa de vitória e a curva de mana. Use a busca e o mínimo de jogos para filtrar |
 | **Oponentes** | Sua taxa de vitória contra cada combinação de cores (Azorius, Golgari…), cores mais enfrentadas e oponentes repetidos |
 | **Partidas** | Histórico completo. **Clique numa partida** para ver o resultado de cada jogo e as cartas vistas dos dois lados |
+| **Limitado** | Seus drafts e selados: data, coleção (sigla, ex.: FRA), tipo (Quick, Premier, tradicional), cores do deck e placar de vitórias–derrotas. **Clique num draft** para ver as partidas dele |
 
 Outras dicas:
 

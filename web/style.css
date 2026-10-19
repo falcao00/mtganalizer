@@ -100,6 +100,16 @@ main { overflow-y: auto; padding: 0 24px 24px; display: flex; flex-direction: co
 #page-matches { flex: 1 1 0; min-height: 360px; }
 #page-matches > .card { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 #t-matches { flex: 1; min-height: 0; max-height: none; }
+
+/* limitado: lista de drafts também ocupa a altura disponível */
+#page-limited { flex: 1 1 0; min-height: 420px; }
+#page-limited > .card { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+#t-limited { flex: 1; min-height: 0; max-height: none; }
+.star { color: #d6b25e; font-size: 15px; }
+th.center, td.center { text-align: center; }
+.run-matches { padding: 2px 0 6px; }
+.run-matches table { background: var(--surface); border-radius: 8px; }
+.run-matches th { position: static; background: var(--surface); }
 .filters {
   position: sticky; top: 0; z-index: 5;
   display: flex; flex-wrap: wrap; align-items: center; gap: 14px;
