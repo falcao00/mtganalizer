@@ -103,7 +103,7 @@ A barra no topo filtra **todas** as telas ao mesmo tempo:
 |---|---|
 | **Visão geral** | Partidas, taxa de vitória, jogos (games), sequência atual, resultados por dia, evolução da taxa de vitória, Play × Draw, taxa por formato e decks mais usados |
 | **Formatos** | Quanto você joga cada formato, vitórias e derrotas por formato, resumo por formato e por evento |
-| **Decks** | Tabela com todos os seus decks. **Clique num deck** para ver a evolução, o desempenho contra cada combinação de cores e o impacto de cada carta |
+| **Decks** | Tabela com todos os seus decks. **Clique num deck** para ver a evolução, o desempenho contra cada combinação de cores, o **histórico de mudanças** (cartas que entraram e saíram entre as partidas, com o V–D de cada versão) e o impacto de cada carta |
 | **Cartas** | Alterne entre **Minhas cartas** e **Cartas dos oponentes**: em quantos jogos apareceram, sua taxa de vitória e a curva de mana. Use a busca e o mínimo de jogos para filtrar |
 | **Oponentes** | Sua taxa de vitória contra cada combinação de cores (Azorius, Golgari…), cores mais enfrentadas e oponentes repetidos |
 | **Partidas** | Histórico completo. **Clique numa partida** para ver o resultado de cada jogo e as cartas vistas dos dois lados |

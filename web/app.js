@@ -581,6 +581,55 @@ function cardPerformance(ms, side) {
   return { stats, totalGames, totalWins };
 }
 
+/* Versões de um deck: uma nova versão começa quando a lista jogada muda de uma partida para a outra. */
+function deckVersions(ms) {
+  const counts = m => {
+    const c = new Map();
+    for (const [id, n] of [...m.main, ...m.command]) c.set(id, (c.get(id) || 0) + n);
+    return c;
+  };
+  const sig = c => [...c].sort((a, b) => a[0] - b[0]).map(x => x.join("x")).join(",");
+  const versions = [];
+  for (const m of [...ms].sort((a, b) => a.date - b.date)) {
+    if (!m.main.length) continue;               // partida sem lista registrada
+    const c = counts(m), s = sig(c);
+    const cur = versions[versions.length - 1];
+    if (cur && cur.sig === s) { cur.matches.push(m); continue; }
+    const added = [], removed = [];
+    if (cur) {
+      for (const [id, n] of c) if (n > (cur.cards.get(id) || 0)) added.push([id, n - (cur.cards.get(id) || 0)]);
+      for (const [id, n] of cur.cards) if (n > (c.get(id) || 0)) removed.push([id, n - (c.get(id) || 0)]);
+    }
+    versions.push({ sig: s, cards: c, matches: [m], added, removed, size: [...c.values()].reduce((a, b) => a + b, 0) });
+  }
+  return versions;
+}
+
+function renderDeckHistory(deckKey) {
+  // usa todas as partidas do deck (ignora o filtro de período) para o histórico ficar completo
+  const versions = deckVersions(state.all.filter(m => m.deckKey === deckKey));
+  const el = $("#deck-history");
+  if (!versions.length) { el.innerHTML = `<div class="empty" style="height:60px">Nenhuma lista registrada para este deck</div>`; return; }
+  const byName = (a, b) => (card(a[0])?.name || "").localeCompare(card(b[0])?.name || "");
+  const list = (items, sign) => items.sort(byName).map(([id, n]) => `<span class="chg ${sign === "+" ? "in" : "out"}">${sign}${n} ${cardName(id)}</span>`).join("");
+  el.innerHTML = versions.map((v, i) => {
+    const s = wl(v.matches), first = v.matches[0].date, last = v.matches[v.matches.length - 1].date;
+    const changes = i === 0
+      ? `<div class="muted small">Primeira lista registrada · ${v.size} cartas</div>`
+      : `<div class="chg-cols">
+           <div><h4>Entraram</h4><div class="chips">${list(v.added, "+") || "<span class='muted'>—</span>"}</div></div>
+           <div><h4>Saíram</h4><div class="chips">${list(v.removed, "−") || "<span class='muted'>—</span>"}</div></div>
+         </div>`;
+    return `<div class="version">
+      <div class="version-h">
+        <b>Versão ${i + 1}</b>${i === versions.length - 1 ? ` <span class="badge">atual</span>` : ""}
+        <span class="muted small">${fmtDateTime(first)}${v.matches.length > 1 ? ` → ${fmtDateTime(last)}` : ""}</span>
+        <span class="spacer"></span>
+        <span class="small">${s.n} partida${s.n === 1 ? "" : "s"} · <b>${s.w}–${s.l}</b> · ${pct(s.wr)}</span>
+      </div>${changes}</div>`;
+  }).reverse().join("");
+}
+
 function renderDeckDetail(d) {
   $("#deck-list").hidden = true;
   const el = $("#deck-detail");
@@ -605,11 +654,15 @@ function renderDeckDetail(d) {
         <div class="card"><div class="card-h"><h3>Taxa de vitória ao longo do tempo</h3></div><div class="chart h240"><canvas id="c-deck-trend"></canvas></div></div>
         <div class="card"><div class="card-h"><h3>Contra cada combinação de cores</h3></div><div class="chart" id="w-deck-opp"><canvas id="c-deck-opp"></canvas></div></div>
       </div>
+      <div class="card"><div class="card-h"><h3>Histórico de mudanças</h3>
+        <span class="muted small">cartas que entraram e saíram entre uma partida e outra, com o desempenho de cada versão</span></div>
+        <div id="deck-history" class="history"></div></div>
       <div class="card"><div class="card-h"><h3>Desempenho das cartas do deck</h3>
         <span class="muted small">"Vista" = comprada ou jogada no jogo. Compare a taxa de vitória quando a carta aparece com quando não aparece.</span></div>
         <div class="table-wrap" id="t-deck-cards"></div></div>
     </div>`;
   $("#deck-back").onclick = () => { state.deckSel = null; renderDecks(); };
+  renderDeckHistory(d.key);
   trendLine("c-deck-trend", ms);
   const opp = [...groupBy(ms, m => m.oppColors)].map(([k, v]) => ({ label: comboName(k), s: wl(v) })).sort((a, b) => b.s.n - a.s.n).slice(0, 12);
   wrBars("c-deck-opp", "w-deck-opp", opp);
