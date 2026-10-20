@@ -27,6 +27,8 @@ create table if not exists matches (
 );
 create table if not exists cards (grp_id integer primary key, data text);
 create table if not exists meta (key text primary key, value text);
+-- endereço final da imagem no Scryfall ('' = carta desconhecida lá)
+create table if not exists card_images (grp_id integer primary key, url text, ts real);
 """
 
 
@@ -135,10 +137,38 @@ class Store:
                             "winCondition": wc, "deckId": did, "deckName": dname, "deckFormat": dfmt,
                             **d})
         cards = {str(g): json.loads(v) for g, v in self.conn.execute("select grp_id, data from cards")}
+        for g, url in self.conn.execute("select grp_id, url from card_images where url != ''"):
+            if str(g) in cards:
+                cards[str(g)]["img"] = url
         return {"matches": matches, "cards": cards,
                 "player": {"id": player_id, "name": self.get_meta("player_name")},
                 "rank": self.get_meta("rank"), "lastImport": self.get_meta("last_import"),
                 "dbPath": self.path}
+
+
+    # ------------------------------------------------------------- imagens
+    NOT_FOUND_RETRY = 7 * 86400   # tenta de novo cartas que o Scryfall não conhecia após 7 dias
+
+    def image_urls(self, ids):
+        """{id: url} já guardados, e a lista dos que ainda precisam ser consultados."""
+        ids = {int(i) for i in ids}
+        known, missing = {}, []
+        rows = {g: (u, t) for g, u, t in self.conn.execute("select grp_id, url, ts from card_images")}
+        now = time.time()
+        for i in ids:
+            if i in rows and (rows[i][0] or now - rows[i][1] < self.NOT_FOUND_RETRY):
+                known[i] = rows[i][0]
+            else:
+                missing.append(i)
+        return known, missing
+
+    def save_image_url(self, grp_id, url):
+        self.conn.execute("insert or replace into card_images values (?, ?, ?)", (int(grp_id), url, time.time()))
+        self.conn.commit()
+
+    def card_name_en(self, grp_id):
+        row = self.conn.execute("select data from cards where grp_id=?", (int(grp_id),)).fetchone()
+        return json.loads(row[0]).get("name_en") if row else None
 
 
 def _detailed_logs(path):

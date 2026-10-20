@@ -469,7 +469,8 @@ function renderOverview() {
   const fmts = [...groupBy(ms, m => m.fmt)].map(([k, v]) => ({ label: k, s: wl(v) })).sort((a, b) => b.s.n - a.s.n);
   wrBars("c-fmt", "w-fmt", fmts);
 
-  const decksTop = [...groupBy(ms, m => m.deckKey)].map(([, v]) => ({ label: trunc(v[v.length - 1].deckName, 28), s: wl(v) }))
+  // decks de draft/selado são de uso único: ficam de fora do ranking
+  const decksTop = [...groupBy(ms.filter(m => !m.limited), m => m.deckKey)].map(([, v]) => ({ label: trunc(v[v.length - 1].deckName, 28), s: wl(v) }))
     .sort((a, b) => b.s.n - a.s.n).slice(0, 8);
   wlBars("c-topdecks", "w-topdecks", "lg-topdecks", decksTop);
 }
@@ -630,6 +631,89 @@ function renderDeckHistory(deckKey) {
   }).reverse().join("");
 }
 
+/* Lista visual do deck (versão atual): colunas por valor de mana, comandante antes e terrenos no fim. */
+function renderDeckVisual(deckKey) {
+  const versions = deckVersions(state.all.filter(m => m.deckKey === deckKey));
+  const el = $("#deck-visual");
+  if (!versions.length) { el.innerHTML = `<div class="empty" style="height:60px">Nenhuma lista registrada para este deck</div>`; return; }
+  const cur = versions[versions.length - 1];
+  const commander = new Set(cur.matches[cur.matches.length - 1].command.map(x => x[0]));
+  // edições diferentes da mesma carta viram uma pilha só
+  const byName = new Map();
+  for (const [id, n] of cur.cards) {
+    const k = (commander.has(id) ? "cmd:" : "") + (card(id)?.name_en || id);
+    const e = byName.get(k);
+    if (e) e[1] += n; else byName.set(k, [id, n]);
+  }
+  const cols = new Map();
+  for (const [id, n] of byName.values()) {
+    const c = card(id) || {};
+    const key = commander.has(id) ? "cmd" : c.is_land ? "land" : Math.min(7, c.cmc ?? 0);
+    if (!cols.has(key)) cols.set(key, []);
+    cols.get(key).push([id, n]);
+  }
+  const order = ["cmd", 0, 1, 2, 3, 4, 5, 6, 7, "land"];
+  const label = k => k === "cmd" ? "Comandante" : k === "land" ? "Terrenos" : k === 7 ? "7+" : String(k);
+  const colorRank = c => { const s = sortColors(c?.colors || ""); return s.length > 1 ? 5 : s ? "WUBRG".indexOf(s) : 6; };
+  const byColorName = (a, b) => (colorRank(card(a[0])) - colorRank(card(b[0]))) || (card(a[0])?.name || "").localeCompare(card(b[0])?.name || "");
+  $("#deck-list-sub").textContent = `${cur.size} cartas · versão ${versions.length} (atual) · por valor de mana, do menor para o maior`;
+  el.innerHTML = order.filter(k => cols.has(k)).map(k => {
+    const items = cols.get(k).sort(byColorName);
+    const count = items.reduce((a, [, n]) => a + n, 0);
+    return `<div class="dv-col"><div class="dv-h"><span>${label(k)}</span><span class="muted">${count}</span></div>
+      <div class="dv-stack">${items.map(([id, n]) => {
+        const c = card(id) || {};
+        return `<div class="dv-card" data-card="${id}"><img data-id="${id}" alt="${esc(c.name || "#" + id)}">
+          <span class="dv-name">${esc(c.name || "#" + id)}<br><span class="muted">${esc(c.cost || "")}</span></span>
+          ${n > 1 ? `<b class="dv-qty">x${n}</b>` : ""}</div>`;
+      }).join("")}</div></div>`;
+  }).join("");
+  loadCardImages($$("img[data-id]", el));
+}
+
+/* Imagens das cartas. O app descobre uma única vez o endereço final de cada imagem
+   (cards.scryfall.io, sem limite de pedidos) e guarda no banco; cartas já conhecidas
+   carregam direto, e o cache da janela evita baixar de novo. */
+const arenaImg = id => `https://api.scryfall.com/cards/arena/${id}?format=image&version=normal`;
+const canResolve = () => !!state.api?.resolve_images;
+
+async function resolveImages(ids) {
+  let res = {};
+  try { res = await state.api.resolve_images(ids.map(Number)); } catch (e) { /* sem rede */ }
+  for (const [id, url] of Object.entries(res)) { const c = card(id); if (c && url) c.img = url; }
+  return res;
+}
+async function imageUrl(id) {
+  const c = card(id);
+  if (c?.img) return c.img;
+  if (!canResolve()) return arenaImg(id);                 // modo navegador (desenvolvimento)
+  return (await resolveImages([id]))[id] || "";
+}
+function setCardImg(img, url) {
+  const box = img.closest(".dv-card");
+  img.onload = () => box?.classList.add("loaded");
+  img.src = url;
+}
+async function loadCardImages(imgs) {
+  const missing = [];
+  for (const img of imgs) {
+    const c = card(img.dataset.id);
+    if (c?.img) setCardImg(img, c.img); else missing.push(img);
+  }
+  if (!missing.length) return;
+  if (!canResolve()) {                                     // modo navegador: espaça os pedidos à API
+    missing.forEach((img, i) => setTimeout(() => img.isConnected && setCardImg(img, arenaImg(img.dataset.id)), i * 110));
+    return;
+  }
+  const ids = [...new Set(missing.map(img => img.dataset.id))];
+  for (let i = 0; i < ids.length; i += 10) {
+    if (!missing.some(img => img.isConnected)) return;   // saiu da tela
+    const chunk = ids.slice(i, i + 10);
+    const res = await resolveImages(chunk);
+    for (const img of missing) if (chunk.includes(img.dataset.id) && res[img.dataset.id]) setCardImg(img, res[img.dataset.id]);
+  }
+}
+
 function renderDeckDetail(d) {
   $("#deck-list").hidden = true;
   const el = $("#deck-detail");
@@ -657,9 +741,9 @@ function renderDeckDetail(d) {
       <div class="card"><div class="card-h"><h3>Histórico de mudanças</h3>
         <span class="muted small">cartas que entraram e saíram entre uma partida e outra, com o desempenho de cada versão</span></div>
         <div id="deck-history" class="history"></div></div>
-      <div class="card"><div class="card-h"><h3>Desempenho das cartas do deck</h3>
-        <span class="muted small">"Vista" = comprada ou jogada no jogo. Compare a taxa de vitória quando a carta aparece com quando não aparece.</span></div>
-        <div class="table-wrap" id="t-deck-cards"></div></div>
+      <div class="card"><div class="card-h"><h3>Lista do deck</h3>
+        <span class="muted small" id="deck-list-sub"></span></div>
+        <div id="deck-visual" class="deck-visual"></div></div>
     </div>`;
   $("#deck-back").onclick = () => { state.deckSel = null; renderDecks(); };
   renderDeckHistory(d.key);
@@ -667,31 +751,7 @@ function renderDeckDetail(d) {
   const opp = [...groupBy(ms, m => m.oppColors)].map(([k, v]) => ({ label: comboName(k), s: wl(v) })).sort((a, b) => b.s.n - a.s.n).slice(0, 12);
   wrBars("c-deck-opp", "w-deck-opp", opp);
 
-  // cartas do deck (versão mais recente + qualquer carta que tenha aparecido)
-  const latest = ms.reduce((a, b) => a.date > b.date ? a : b);
-  const qty = new Map();
-  for (const [id, n] of [...latest.main, ...latest.command]) qty.set(id, (qty.get(id) || 0) + n);
-  const { stats, totalGames, totalWins } = cardPerformance(ms, "me");
-  const ids = new Set([...qty.keys(), ...stats.keys()]);
-  const rows = [...ids].map(id => {
-    const c = card(id) || {};
-    const s = stats.get(id) || { games: 0, wins: 0 };
-    const notG = totalGames - s.games, notW = totalWins - s.wins;
-    const seen = s.games ? s.wins / s.games : null, not = notG ? notW / notG : null;
-    return { id, name: c.name || "#" + id, qty: qty.get(id) || 0, type: c.types || "", cost: c.cost || "", cmc: c.cmc ?? null,
-      land: !!c.is_land, games: s.games, seen, not, delta: seen != null && not != null ? seen - not : null };
-  }).filter(r => r.qty || r.games);
-  table("#t-deck-cards", [
-    { key: "name", label: "Carta", cls: "name", html: r => cardName(r.id) },
-    { key: "qty", label: "Qtd.", num: true, html: r => r.qty || "<span class='muted'>fora</span>" },
-    { key: "type", label: "Tipo" },
-    { key: "cmc", label: "Custo", num: true, html: r => r.land ? "—" : esc(r.cost) },
-    { key: "games", label: "Jogos vista", num: true },
-    { key: "seen", label: "% V quando vista", num: true, html: r => wrCell(r.seen) },
-    { key: "not", label: "% V sem ela", num: true, html: r => pct(r.not) },
-    { key: "delta", label: "Diferença", num: true, html: r => r.delta == null ? "—" :
-      `<span class="${r.delta > 0.005 ? "delta-pos" : r.delta < -0.005 ? "delta-neg" : ""}">${r.delta > 0 ? "▲ +" : r.delta < 0 ? "▼ " : ""}${Math.round(r.delta * 100)} p.p.</span>` },
-  ], rows, { sortKey: "games" });
+  renderDeckVisual(d.key);
 }
 
 /* ------------------------------------------------------------------- cartas */
@@ -828,13 +888,14 @@ function toggleMatch(m, tr) {
     .sort((a, b) => (a.is_land - b.is_land) || (a.cmc - b.cmc) || a.name.localeCompare(b.name))
     .map(c => `<span>${cardName(c.id)}</span>`).join("") || "<span class='muted'>nenhuma</span>";
   const my = new Set(), opp = new Set();
-  m.games.forEach(g => { g.my_seen.forEach(x => my.add(x)); g.opp_seen.forEach(x => opp.add(x)); });
+  const oppCmd = new Set();
+  m.games.forEach(g => { g.my_seen.forEach(x => my.add(x)); g.opp_seen.forEach(x => opp.add(x)); (g.opp_commander || []).forEach(x => oppCmd.add(x)); });
   const games = m.games.map(g => `<span><b>Jogo ${g.n}:</b> ${({ win: "vitória", loss: "derrota", draw: "empate" })[g.result] || "?"} · ${g.on_play == null ? "" : g.on_play ? "play · " : "draw · "}${g.turns} turnos${g.my_mulligans ? ` · ${g.my_mulligans} mulligan(s)` : ""}</span>`).join("");
   tr.insertAdjacentHTML("afterend", `<tr class="detail"><td colspan="${cols}">
     <div class="games">${games}<span class="muted">evento: ${esc(m.event)}</span></div>
     <div class="match-detail">
-      <div><h4>Suas cartas vistas</h4><div class="chips">${list(my)}</div></div>
-      <div><h4>Cartas do oponente vistas</h4><div class="chips">${list(opp)}</div></div>
+      <div><h4>Suas cartas</h4><div class="chips">${list(my)}</div></div>
+      <div><h4>Cartas do oponente${oppCmd.size ? `: ${[...oppCmd].map(cardName).join(", ")}` : ""}</h4><div class="chips">${list(opp)}</div></div>
     </div></td></tr>`);
 }
 
@@ -1015,7 +1076,11 @@ function setupCardPreview() {
       const c = card(id);
       img.onerror = () => { if (c?.name_en && !img.dataset.fallback) { img.dataset.fallback = 1; img.src = `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(c.name_en)}&format=image&version=normal`; } else box.hidden = true; };
       delete img.dataset.fallback;
-      img.src = `https://api.scryfall.com/cards/arena/${id}?format=image&version=normal`;
+      if (c?.img) img.src = c.img;
+      else {
+        img.removeAttribute("src");
+        imageUrl(id).then(url => { if (cur !== id) return; if (url) img.src = url; else box.hidden = true; });
+      }
     }
     box.hidden = false;
   });

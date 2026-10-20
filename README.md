@@ -101,9 +101,9 @@ A barra no topo filtra **todas** as telas ao mesmo tempo:
 
 | Tela | O que mostra |
 |---|---|
-| **Visão geral** | Partidas, taxa de vitória, jogos (games), sequência atual, resultados por dia, evolução da taxa de vitória, Play × Draw, taxa por formato e decks mais usados |
+| **Visão geral** | Partidas, taxa de vitória, jogos (games), sequência atual, resultados por dia, evolução da taxa de vitória, Play × Draw, taxa por formato e decks mais usados (sem decks de draft/selado) |
 | **Formatos** | Quanto você joga cada formato, vitórias e derrotas por formato, resumo por formato e por evento |
-| **Decks** | Tabela com todos os seus decks. **Clique num deck** para ver a evolução, o desempenho contra cada combinação de cores, o **histórico de mudanças** (cartas que entraram e saíram entre as partidas, com o V–D de cada versão) e o impacto de cada carta |
+| **Decks** | Tabela com todos os seus decks. **Clique num deck** para ver a evolução, o desempenho contra cada combinação de cores, o **histórico de mudanças** (cartas que entraram e saíram entre as partidas, com o V–D de cada versão) e a **lista do deck** com as imagens das cartas por valor de mana |
 | **Cartas** | Alterne entre **Minhas cartas** e **Cartas dos oponentes**: em quantos jogos apareceram, sua taxa de vitória e a curva de mana. Use a busca e o mínimo de jogos para filtrar |
 | **Oponentes** | Sua taxa de vitória contra cada combinação de cores (Azorius, Golgari…), cores mais enfrentadas e oponentes repetidos |
 | **Partidas** | Histórico completo. **Clique numa partida** para ver o resultado de cada jogo e as cartas vistas dos dois lados |
@@ -116,13 +116,13 @@ Outras dicas:
 - O botão **◐**, no canto inferior esquerdo, alterna entre tema claro e escuro.
 - **Importar log…** carrega logs antigos que você tenha guardado (`Player.log` de outra data ou de outro PC).
 
-### Como ler a análise de cartas
+### Lista do deck
 
-Na tela de um deck, a coluna **"% V quando vista"** mostra sua taxa de vitória nos jogos em que a
-carta foi comprada ou jogada. **"% V sem ela"** mostra a taxa nos jogos em que ela não apareceu, e
-**Diferença** é a comparação entre as duas. Cartas com diferença positiva e consistente tendem a ser
-as que mais contribuem para o deck. Com poucos jogos os números oscilam muito, então use o filtro de
-mínimo de jogos.
+Na tela de um deck, a **Lista do deck** mostra as imagens das cartas da versão atual, em colunas por
+valor de mana, do menor para o maior: o comandante (em Brawl) vem primeiro e os terrenos no fim.
+Cópias repetidas aparecem empilhadas com a quantidade (ex.: x4). As imagens vêm do Scryfall e precisam
+de internet. O endereço de cada imagem é consultado só uma vez por carta e fica guardado no
+banco local; depois disso o deck abre na hora, mesmo após fechar e abrir o app.
 
 ## 5. Onde ficam os dados
 

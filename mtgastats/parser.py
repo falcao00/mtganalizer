@@ -283,14 +283,23 @@ class LogParser:
             else:
                 g["opp_mulligans"] = max(g["opp_mulligans"], mc)
 
+        zone_types = m.setdefault("zone_types", {})
+        for z in gsm.get("zones") or []:
+            zone_types[z.get("zoneId")] = z.get("type")
+        brawl = "Brawl" in m["variant"] or "Commander" in m["variant"]
+
         for o in gsm.get("gameObjects") or []:
             if o.get("type") not in CARD_OBJECT_TYPES or not o.get("grpId"):
                 continue
             grp = o["grpId"]
+            # em Brawl, carta na zona de comando = comandante
+            in_command = brawl and zone_types.get(o.get("zoneId")) == "ZoneType_Command"
             if o.get("ownerSeatId") == m["my_seat"]:
                 g["my_seen"].add(grp)
             elif o.get("ownerSeatId") == m["opp_seat"]:
                 g["opp_seen"].add(grp)
+                if in_command:
+                    g["opp_commander"].add(grp)
 
         if gi.get("stage") == "GameStage_GameOver" and g["result"] is None:
             for r in gi.get("results") or []:
@@ -318,6 +327,7 @@ class LogParser:
                 "n": num, "result": g["result"], "on_play": g["on_play"], "turns": g["turns"],
                 "my_mulligans": g["my_mulligans"], "opp_mulligans": g["opp_mulligans"],
                 "my_seen": sorted(g["my_seen"]), "opp_seen": sorted(g["opp_seen"]),
+                "opp_commander": sorted(g["opp_commander"]),
             })
         result = m["result"]
         if result is None and games:
@@ -372,7 +382,7 @@ def _same_cards(deck, cards):
 
 def _new_game(n):
     return {"n": n, "result": None, "on_play": None, "turns": 0, "my_mulligans": 0,
-            "opp_mulligans": 0, "my_seen": set(), "opp_seen": set()}
+            "opp_mulligans": 0, "my_seen": set(), "opp_seen": set(), "opp_commander": set()}
 
 
 def _won(result, my_team):
