@@ -272,8 +272,10 @@ class LogParser:
         tn = ti.get("turnNumber")
         if tn:
             g["turns"] = max(g["turns"], tn)
-            if g["on_play"] is None and tn == 1 and ti.get("activePlayer"):
-                g["on_play"] = ti["activePlayer"] == m["my_seat"]
+        # quem começa já vem como activePlayer durante o mulligan (antes do turno 1);
+        # assim jogos encerrados antes do primeiro turno também ganham Play/Draw
+        if g["on_play"] is None and ti.get("activePlayer") and (not tn or tn == 1):
+            g["on_play"] = ti["activePlayer"] == m["my_seat"]
         for p in gsm.get("players") or []:
             mc = p.get("mulliganCount")
             if mc is None:
