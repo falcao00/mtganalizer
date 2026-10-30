@@ -29,6 +29,18 @@ Só as partidas jogadas **depois** de ativar a opção aparecem.
 
 ## 3. Instalação
 
+### Pelo instalador (recomendado)
+
+Baixe o **`MTGA-Stats-Setup-<versão>.exe`** da [última versão](https://github.com/falcao00/mtganalizer/releases/latest)
+e execute. Não precisa de Python nem de permissão de administrador: o app vai para
+`%LOCALAPPDATA%\Programs\MTGA Stats` e ganha atalho no menu Iniciar. Para remover, use
+**Configurações → Aplicativos**; o histórico em `%APPDATA%\MTGAStats` é mantido.
+
+> O instalador não tem assinatura digital. Se o Windows mostrar "O Windows protegeu o computador",
+> clique em **Mais informações → Executar assim mesmo**.
+
+### A partir do código
+
 ```bash
 git clone https://github.com/falcao00/mtganalizer.git
 cd mtganalizer
@@ -53,6 +65,10 @@ python -m venv .venv
 
 Dê dois cliques em **`build_exe.bat`**. Ao final aparece **`dist\MTGA Stats.exe`**, um arquivo único
 que roda sem Python. Pode copiá-lo para qualquer lugar ou criar um atalho na área de trabalho.
+
+Para gerar também o instalador, instale o Inno Setup 6 (`winget install JRSoftware.InnoSetup`) e rode
+**`build_installer.bat 1.0.0`** (o número é a versão). O resultado sai em `dist\installer\`; o script do
+instalador está em `installer\MTGAStats.iss`.
 
 ### Opção C: pelo VS Code
 
