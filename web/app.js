@@ -129,7 +129,7 @@ function resultBadge(r) {
 }
 function cardName(id) {
   const c = card(id);
-  return `<span class="cardname" data-card="${id}">${esc(c ? c.name : "#" + id)}</span>`;
+  return `<span class="cardname" data-card="${id}">${esc(c ? c.name.replace(" /// ", " // ") : "#" + id)}</span>`;
 }
 
 /* ------------------------------------------------------------------ filtros */
@@ -968,8 +968,146 @@ function toggleRun(run, tr) {
   ], rows, { sortKey: "ts", sortDir: 1, onRow: toggleMatch });
 }
 
+/* --------------------------------------------------- posso craftar esse deck? */
+const WC_RARITIES = ["common", "uncommon", "rare", "mythic"];
+const WC_PLURAL = { common: "comuns", uncommon: "incomuns", rare: "raras", mythic: "míticas" };
+const SECTION_PT = { commander: "comandante", companion: "companheiro", side: "sideboard" };
+
+function ago(ts) {
+  const min = Math.round((Date.now() / 1000 - ts) / 60);
+  if (min < 1) return "agora";
+  if (min < 60) return `há ${min} min`;
+  if (min < 60 * 24) return `há ${Math.round(min / 60)} h`;
+  return `em ${fmtDateTime(new Date(ts * 1000))}`;
+}
+function showCollection(info, error) {
+  const el = $("#craft-col-info");
+  const parts = [];
+  if (info?.ts) parts.push(`Coleção: <b>${num(info.count)}</b> cartas (${num(info.copies)} cópias), lida do Arena ${ago(info.ts)}.`);
+  else parts.push("A coleção ainda não foi lida. Abra o MTG Arena e clique em Reler coleção.");
+  if (error) parts.push(`<span class="bad">${esc(error)}${info?.ts ? " Usando a última leitura." : ""}</span>`);
+  el.innerHTML = parts.join("<br>");
+  if (info?.wildcards) state.craftWc = info.wildcards;
+  if (!state.craft) $("#craft-wc").innerHTML = WC_RARITIES.map(r => wcTile(r, null)).join("");
+}
+
+function renderCraft() {
+  if (!state.craftInit) {
+    state.craftInit = true;
+    state.api.collection_info?.().then(info => showCollection(info));
+  }
+  if (state.craft) renderCraftResult(state.craft);
+  else $("#craft-wc").innerHTML = WC_RARITIES.map(r => wcTile(r, null)).join("");
+}
+
+function wcTile(r, s) {
+  const have = s ? s.have : state.craftWc?.[r];
+  let status = "&nbsp;";
+  if (s && s.missing) status = s.ok ? `<span class="wc-s ok">✓ dá para craftar · sobram ${num(s.have - s.missing)}</span>`
+    : `<span class="wc-s no">faltam ${num(s.missing - s.have)} wildcards</span>`;
+  else if (s) status = `<span class="wc-s ok">✓ nenhuma faltando</span>`;
+  return `<div class="wc">
+    <div class="wc-h"><span class="rar ${r}"></span>${RARITY_PT[r]}s</div>
+    <div class="wc-n">${s ? num(s.missing) : "—"}<small>${s ? (s.missing === 1 ? "carta falta" : "cartas faltam") : ""}</small></div>
+    <div class="wc-s">você tem <b>${have == null ? "—" : num(have)}</b> wildcards</div>
+    <div class="wc-s">${status}</div>
+  </div>`;
+}
+
+function renderCraftResult(res) {
+  const s = res.summary, rows = res.rows;
+  const missTotal = WC_RARITIES.reduce((a, r) => a + s[r].missing, 0);
+  const v = $("#craft-verdict");
+  v.hidden = false;
+  if (!rows.length) {
+    v.className = "craft-verdict no";
+    v.innerHTML = `<b>Nenhuma carta reconhecida.</b><span class="muted">Confira se a lista está no formato “4 Nome da carta”.</span>`;
+  } else if (res.complete) {
+    v.className = "craft-verdict done";
+    v.innerHTML = `<b>Você já tem todas as cartas deste deck.</b><span class="muted">${num(res.total)} cartas na lista.</span>`;
+  } else if (res.can_craft) {
+    v.className = "craft-verdict";
+    v.innerHTML = `<b>Dá para craftar!</b><span class="muted">Faltam ${num(missTotal)} cartas e você tem wildcards suficientes.</span>`;
+  } else {
+    const short = WC_RARITIES.filter(r => !s[r].ok).map(r => `${num(s[r].missing - s[r].have)} ${WC_PLURAL[r]}`);
+    v.className = "craft-verdict no";
+    v.innerHTML = `<b>Ainda não dá para craftar.</b><span class="muted">Faltam wildcards: ${short.join(", ")}.</span>`;
+  }
+  $("#craft-wc").innerHTML = WC_RARITIES.map(r => wcTile(r, s[r])).join("");
+
+  const unknown = res.unknown.length ? ` · <span style="color:var(--bad-text)">não encontradas: ${res.unknown.map(esc).join(", ")}</span>` : "";
+  $("#craft-hint").innerHTML = `${num(res.total)} cartas · ${num(missTotal)} faltando${unknown}`;
+  const only = $("#craft-only-missing").checked;
+  const rarOrder = r => ["mythic", "rare", "uncommon", "common", "basic"].indexOf(r);
+  const list = rows.filter(r => !only || r.missing).map(r => ({ ...r, name: card(r.id)?.name || r.name_en }));
+  table("#t-craft", [
+    { key: "name", label: "Carta", html: r => `${cardName(r.id)}${r.sections.filter(x => SECTION_PT[x]).map(x => ` <span class="muted small">${SECTION_PT[x]}</span>`).join("")}` },
+    { key: "rarity", label: "Raridade", sort: r => -rarOrder(r.rarity), html: r => `<span class="rar ${r.rarity}"></span>${RARITY_PT[r.rarity] || "—"}` },
+    { key: "qty", label: "No deck", num: true },
+    { key: "owned", label: "Na coleção", num: true, sort: r => r.rarity === "basic" ? 1e9 : r.owned,
+      html: r => r.rarity === "basic" ? "∞" : num(r.owned) },
+    { key: "missing", label: "Faltam", num: true, sort: r => r.missing * 10 - rarOrder(r.rarity),
+      html: r => r.missing ? `<b>${r.missing}</b>` : "✓" },
+  ], list, { sortKey: "missing" });
+  $$("#t-craft tbody tr").forEach(tr => {
+    const td = tr.lastElementChild;
+    td.classList.add(td.textContent === "✓" ? "have-ok" : "miss");
+  });
+  if (!list.length) $("#t-craft").innerHTML = `<div class="empty" style="height:120px">${rows.length ? "Nenhuma carta faltando." : "Nenhuma carta reconhecida."}</div>`;
+}
+
+async function checkDeck() {
+  const text = $("#craft-text").value;
+  try { localStorage.setItem("craftText", text); } catch (e) { /* sem storage */ }
+  if (!text.trim()) return;
+  const btn = $("#craft-check");
+  btn.disabled = true; btn.textContent = "Verificando…";
+  try {
+    const res = await state.api.check_deck(text);
+    showCollection(res.collection, res.collection?.ok === false ? res.collection.error : null);
+    if (!res.ok) {
+      state.craft = null;
+      $("#craft-verdict").hidden = false;
+      $("#craft-verdict").className = "craft-verdict no";
+      $("#craft-verdict").innerHTML = `<b>Não foi possível verificar.</b><span class="muted">${esc(res.error)}</span>`;
+    } else {
+      Object.assign(state.data.cards, res.cards);   // nomes e imagens para a lista e a pré-visualização
+      state.craft = res;
+      renderCraftResult(res);
+    }
+  } catch (e) { status(`Erro ao verificar: ${e.message || e}`, true); console.error(e); }
+  btn.disabled = false; btn.textContent = "Verificar";
+}
+
+async function rereadCollection() {
+  const btn = $("#craft-reread");
+  btn.disabled = true; btn.textContent = "Lendo…";
+  try {
+    const res = await state.api.read_collection();
+    showCollection(res, res.ok ? null : res.error);
+    if (res.ok && $("#craft-text").value.trim() && state.craft) await checkDeck();
+  } catch (e) { showCollection(null, String(e.message || e)); }
+  btn.disabled = false; btn.textContent = "Reler coleção do Arena";
+}
+
+function setupCraft() {
+  try { $("#craft-text").value = localStorage.getItem("craftText") || ""; } catch (e) { /* sem storage */ }
+  $("#craft-check").onclick = checkDeck;
+  $("#craft-clear").onclick = () => {
+    $("#craft-text").value = ""; state.craft = null;
+    try { localStorage.removeItem("craftText"); } catch (e) { /* sem storage */ }
+    $("#craft-verdict").hidden = true; $("#craft-hint").textContent = "";
+    $("#craft-wc").innerHTML = WC_RARITIES.map(r => wcTile(r, null)).join("");
+    $("#t-craft").innerHTML = `<div class="empty" style="height:140px">Cole uma lista à esquerda e clique em Verificar.</div>`;
+    $("#craft-text").focus();
+  };
+  $("#craft-text").addEventListener("keydown", ev => { if (ev.key === "Enter" && ev.ctrlKey) checkDeck(); });
+  $("#craft-reread").onclick = rereadCollection;
+  $("#craft-only-missing").onchange = () => state.craft && renderCraftResult(state.craft);
+}
+
 /* --------------------------------------------------------------- navegação */
-const RENDER = { overview: renderOverview, formats: renderFormats, decks: renderDecks, cards: renderCards, opponents: renderOpponents, matches: renderMatches, limited: renderLimited };
+const RENDER = { overview: renderOverview, formats: renderFormats, decks: renderDecks, cards: renderCards, opponents: renderOpponents, matches: renderMatches, limited: renderLimited, craft: renderCraft };
 
 function render() {
   if (!state.data) return;
@@ -981,6 +1119,7 @@ function go(page) {
   state.page = page;
   $$("#nav button").forEach(b => b.classList.toggle("active", b.dataset.page === page));
   $$(".page").forEach(p => p.hidden = p.id !== "page-" + page);
+  $("#filters").hidden = page === "craft";   // filtros de partidas não se aplicam à coleção
   render();
 }
 
@@ -1061,6 +1200,9 @@ const devApi = {
   async refresh() { return { ok: true, new: 0, detailed_logs: true }; },
   async check_updates() { return { changed: false }; },
   async import_file() { return { ok: false, cancelled: true }; },
+  async collection_info() { return (await fetch("dev-craft.json")).json().then(r => r.collection); },
+  async read_collection() { return this.collection_info(); },
+  async check_deck() { return (await fetch("dev-craft.json")).json(); },
 };
 
 /* ---------------------------------------------------------- pré-visualização */
@@ -1115,6 +1257,7 @@ function setupTheme() {
 async function init() {
   setupTheme();
   setupCardPreview();
+  setupCraft();
   $$("#nav button").forEach(b => b.onclick = () => { if (b.dataset.page === "decks") state.deckSel = null; go(b.dataset.page); });
   FILTERS.forEach(id => $("#" + id).addEventListener("change", () => {
     if (id === "f-format") buildFilterOptions();

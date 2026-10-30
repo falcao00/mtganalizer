@@ -253,3 +253,46 @@ tr.detail td { white-space: normal; background: var(--surface-2); }
   position: fixed; z-index: 40; pointer-events: none; background: var(--surface); color: var(--text);
   border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 12px; box-shadow: 0 6px 20px rgba(0,0,0,.25);
 }
+
+/* posso craftar esse deck? */
+#page-craft { flex: 1 1 0; min-height: 520px; padding-top: 20px; }   /* sem a barra de filtros acima */
+.craft { flex: 1; display: grid; grid-template-columns: minmax(280px, 380px) 1fr; gap: 16px; min-height: 0; }
+.craft-input { display: flex; flex-direction: column; min-height: 0; }
+.craft-input textarea {
+  flex: 1; min-height: 260px; resize: none; width: 100%; padding: 10px 12px;
+  font: 12.5px/1.5 ui-monospace, "Cascadia Mono", Consolas, monospace; color: var(--text);
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px;
+}
+.craft-input textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.craft-actions { display: flex; gap: 8px; margin-top: 10px; }
+.craft-actions .btn.primary { flex: 1; }
+.craft-col { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--grid); display: grid; gap: 8px; }
+.craft-col .bad { color: var(--bad-text); }
+.btn.small { padding: 4px 10px; font-size: 12px; justify-self: start; }
+.craft-out { display: flex; flex-direction: column; gap: 16px; min-height: 0; }
+.craft-list { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.craft-list .table-wrap { flex: 1; min-height: 0; max-height: none; }
+.craft-only { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.craft-verdict {
+  border-radius: 12px; padding: 14px 16px; border: 1px solid var(--border); background: var(--surface);
+  border-left: 4px solid var(--good-text); display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+}
+.craft-verdict.no { border-left-color: var(--bad-text); }
+.craft-verdict.done { border-left-color: var(--accent); }
+.craft-verdict b { font-size: 16px; }
+.wc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.wc { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: var(--surface-2); }
+.wc-h { font-size: 12px; color: var(--text-2); font-weight: 600; }
+.wc-n { font-size: 24px; font-weight: 650; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.wc-n small { font-size: 12px; font-weight: 500; color: var(--muted); margin-left: 4px; }
+.wc-s { font-size: 12px; margin-top: 2px; color: var(--muted); }
+.wc-s.ok { color: var(--good-text); }
+.wc-s.no { color: var(--bad-text); font-weight: 600; }
+td.miss { color: var(--bad-text); font-weight: 600; }
+td.have-ok { color: var(--good-text); }
+@media (max-width: 1100px) {
+  #page-craft { flex: none; }
+  .craft { grid-template-columns: 1fr; }
+  .craft-list .table-wrap { max-height: 560px; }
+  .wc-grid { grid-template-columns: repeat(2, 1fr); }
+}

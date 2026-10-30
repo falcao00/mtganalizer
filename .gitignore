@@ -12,3 +12,4 @@ mudanças/
 web/dev-data.json
 *.db
 .claude/
+web/dev-craft.json

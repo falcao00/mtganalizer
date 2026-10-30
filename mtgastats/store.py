@@ -82,6 +82,10 @@ class Store:
             self.set_meta("rank", {**parser.rank, "ts": time.time()})
         if parser.install_dir:
             self.set_meta("install_dir", parser.install_dir)
+        if parser.wildcards and parser.wildcards != self.get_meta("wildcards_log"):
+            # só quando mudou no log, para não sobrescrever uma leitura mais nova da memória do Arena
+            self.set_meta("wildcards_log", parser.wildcards)
+            self.set_meta("wildcards", {**parser.wildcards, "ts": time.time()})
         self.set_meta("event_decks", parser.event_decks)
         self.set_meta("deck_catalog", parser.deck_catalog)
         self.set_meta("last_import", time.time())
@@ -114,10 +118,41 @@ class Store:
             return {"missing": len(missing), "error": "Banco de cartas do Arena não encontrado"}
         db = CardDB(path)
         found = db.lookup(missing)
+        self.save_cards(found)
+        return {"missing": len(missing) - len(found)}
+
+    def save_cards(self, found):
         self.conn.executemany("insert or replace into cards values (?, ?)",
                               [(g, json.dumps(v)) for g, v in found.items()])
         self.conn.commit()
-        return {"missing": len(missing) - len(found)}
+
+    def load_cards(self, ids=None):
+        """{grpId: info} com a imagem já resolvida (todas as cartas, ou só os ids pedidos)."""
+        cards = {g: json.loads(v) for g, v in self.conn.execute("select grp_id, data from cards")}
+        for g, url in self.conn.execute("select grp_id, url from card_images where url != ''"):
+            if g in cards:
+                cards[g]["img"] = url
+        if ids is not None:
+            cards = {g: cards[g] for g in map(int, ids) if g in cards}
+        return cards
+
+    def known_card_ids(self):
+        return {r[0] for r in self.conn.execute("select grp_id from cards")}
+
+    # ------------------------------------------------------------- coleção
+    def save_collection(self, col):
+        self.set_meta("collection", {"cards": col["cards"], "ts": col["ts"]})
+        self.set_meta("wildcards", {**col["wildcards"], "ts": col["ts"]})
+        self.conn.commit()
+
+    def collection(self):
+        """({grpId: quantidade}, momento da leitura) — vazio se nunca foi lida."""
+        c = self.get_meta("collection") or {}
+        return {int(k): v for k, v in (c.get("cards") or {}).items()}, c.get("ts")
+
+    def collection_info(self):
+        cards, ts = self.collection()
+        return {"ts": ts, "count": len(cards), "copies": sum(cards.values()), "wildcards": self.get_meta("wildcards")}
 
     # ----------------------------------------------------------------- read
     def load_all(self):
@@ -136,10 +171,7 @@ class Store:
                             "result": res, "reason": rr, "superFormat": sf, "variant": var,
                             "winCondition": wc, "deckId": did, "deckName": dname, "deckFormat": dfmt,
                             **d})
-        cards = {str(g): json.loads(v) for g, v in self.conn.execute("select grp_id, data from cards")}
-        for g, url in self.conn.execute("select grp_id, url from card_images where url != ''"):
-            if str(g) in cards:
-                cards[str(g)]["img"] = url
+        cards = {str(g): v for g, v in self.load_cards().items()}
         return {"matches": matches, "cards": cards,
                 "player": {"id": player_id, "name": self.get_meta("player_name")},
                 "rank": self.get_meta("rank"), "lastImport": self.get_meta("last_import"),

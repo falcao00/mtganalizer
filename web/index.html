@@ -22,6 +22,7 @@
       <button data-page="opponents">Oponentes</button>
       <button data-page="matches">Partidas</button>
       <button data-page="limited">Limitado</button>
+      <button data-page="craft">Posso craftar esse deck?</button>
     </nav>
     <div class="side-foot">
       <div id="player" class="player"></div>
@@ -121,6 +122,35 @@
     <section class="page" id="page-limited" hidden>
       <div class="kpis" id="limited-kpis"></div>
       <div class="card"><div class="card-h"><h3>Drafts realizados</h3><span class="muted small">clique em um draft para ver as partidas</span></div><div class="table-wrap" id="t-limited"></div></div>
+    </section>
+
+    <section class="page" id="page-craft" hidden>
+      <div class="craft">
+        <div class="card craft-input">
+          <div class="card-h"><h3>Lista do deck</h3><span class="muted small">cole no formato de exportação do Arena</span></div>
+          <textarea id="craft-text" spellcheck="false" placeholder="Deck&#10;4 Lightning Bolt (STA) 42&#10;4 Sheoldred, the Apocalypse (DMU) 107&#10;20 Swamp&#10;&#10;Sideboard&#10;2 Duress"></textarea>
+          <div class="craft-actions">
+            <button id="craft-check" class="btn primary">Verificar</button>
+            <button id="craft-clear" class="btn ghost">Limpar</button>
+          </div>
+          <div class="craft-col">
+            <div id="craft-col-info" class="muted small"></div>
+            <button id="craft-reread" class="btn ghost small">Reler coleção do Arena</button>
+          </div>
+        </div>
+        <div class="craft-out">
+          <div id="craft-verdict" class="craft-verdict" hidden></div>
+          <div class="card">
+            <div class="card-h"><h3>Cartas faltando e wildcards</h3><span class="muted small">por raridade</span></div>
+            <div class="wc-grid" id="craft-wc"></div>
+          </div>
+          <div class="card craft-list">
+            <div class="card-h"><h3>Cartas do deck</h3><span class="muted small" id="craft-hint"></span>
+              <label class="small muted craft-only"><input type="checkbox" id="craft-only-missing"> só as que faltam</label></div>
+            <div class="table-wrap" id="t-craft"><div class="empty" style="height:140px">Cole uma lista à esquerda e clique em Verificar.</div></div>
+          </div>
+        </div>
+      </div>
     </section>
   </main>
 </div>

@@ -15,6 +15,9 @@ REQUEST_RE = re.compile(r"==> (\w+) (\{.*\})\s*$")
 RESPONSE_RE = re.compile(r"^<== (\w+)\(")
 INSTALL_RE = re.compile(r"from file: (.+?)/MTGA_Data/")
 
+WILDCARD_KEYS = {"common": "WildCardCommons", "uncommon": "WildCardUnCommons",
+                 "rare": "WildCardRares", "mythic": "WildCardMythics"}
+
 CARD_OBJECT_TYPES = {"GameObjectType_Card", "GameObjectType_MDFCBack",
                      "GameObjectType_SplitLeft", "GameObjectType_SplitRight"}
 
@@ -64,6 +67,7 @@ class LogParser:
         self.deck_catalog = {}     # deck_id -> deck
         self.event_decks = {}      # event name -> deck
         self.rank = None
+        self.wildcards = None      # última posição de wildcards vista no log
         self.matches = {}          # match_id -> match concluída
         self._open = {}            # match_id -> match em andamento
         self._current_id = None
@@ -144,6 +148,9 @@ class LogParser:
                 self.deck_catalog[deck["deck_id"]] = deck
 
     def _handle_obj(self, obj, response_name):
+        inv = obj.get("InventoryInfo")   # vem junto com o StartHook e com respostas de eventos
+        if isinstance(inv, dict) and "WildCardRares" in inv:
+            self.wildcards = {r: inv.get(k, 0) for r, k in WILDCARD_KEYS.items()}
         if "greToClientEvent" in obj:
             self._handle_gre(obj["greToClientEvent"].get("greToClientMessages") or [])
         elif "matchGameRoomStateChangedEvent" in obj:
