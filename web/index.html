@@ -15,40 +15,44 @@
       <span>MTGA Stats</span>
     </div>
     <nav id="nav">
-      <button data-page="overview" class="active">Visão geral</button>
-      <button data-page="formats">Formatos</button>
-      <button data-page="decks">Decks</button>
-      <button data-page="cards">Cartas</button>
-      <button data-page="opponents">Oponentes</button>
-      <button data-page="matches">Partidas</button>
-      <button data-page="limited">Limitado</button>
-      <button data-page="craft">Posso craftar esse deck?</button>
+      <button data-page="overview" class="active" data-i18n>Visão geral</button>
+      <button data-page="formats" data-i18n>Formatos</button>
+      <button data-page="decks" data-i18n>Decks</button>
+      <button data-page="cards" data-i18n>Cartas</button>
+      <button data-page="opponents" data-i18n>Oponentes</button>
+      <button data-page="matches" data-i18n>Partidas</button>
+      <button data-page="limited" data-i18n>Limitado</button>
+      <button data-page="craft" data-i18n>Posso craftar esse deck?</button>
     </nav>
     <div class="side-foot">
       <div id="player" class="player"></div>
       <div id="rank" class="rank"></div>
-      <button id="btn-refresh" class="btn primary">Atualizar dados</button>
-      <button id="btn-import" class="btn ghost">Importar log…</button>
+      <button id="btn-refresh" class="btn primary" data-i18n>Atualizar dados</button>
+      <button id="btn-import" class="btn ghost" data-i18n>Importar log…</button>
+      <span id="status" class="muted small"></span>
       <div class="row-between">
-        <span id="status" class="muted small"></span>
-        <button id="btn-theme" class="icon-btn" title="Alternar tema" aria-label="Alternar tema">◐</button>
+        <div class="seg lang" id="lang" role="group" aria-label="Idioma" data-i18n-aria-label>
+          <button data-lang="pt" title="Português (Brasil)">PT-BR</button>
+          <button data-lang="en" title="English (US)">EN-US</button>
+        </div>
+        <button id="btn-theme" class="icon-btn" title="Alternar tema" aria-label="Alternar tema" data-i18n-title data-i18n-aria-label>◐</button>
       </div>
     </div>
   </aside>
 
   <main>
     <header class="filters" id="filters">
-      <label>Formato <select id="f-format"></select></label>
-      <label>Fila <select id="f-queue"></select></label>
-      <label>Melhor de <select id="f-bo"><option value="">Todos</option><option value="Bo1">Bo1</option><option value="Bo3">Bo3</option></select></label>
-      <label>Período <select id="f-period">
-        <option value="0">Todo o histórico</option>
-        <option value="1">Hoje</option>
-        <option value="7">Últimos 7 dias</option>
-        <option value="30">Últimos 30 dias</option>
-        <option value="90">Últimos 90 dias</option>
+      <label><span data-i18n>Formato</span> <select id="f-format"></select></label>
+      <label><span data-i18n>Fila</span> <select id="f-queue"></select></label>
+      <label><span data-i18n>Melhor de</span> <select id="f-bo"><option value="" data-i18n>Todos</option><option value="Bo1">Bo1</option><option value="Bo3">Bo3</option></select></label>
+      <label><span data-i18n>Período</span> <select id="f-period">
+        <option value="0" data-i18n>Todo o histórico</option>
+        <option value="1" data-i18n>Hoje</option>
+        <option value="7" data-i18n>Últimos 7 dias</option>
+        <option value="30" data-i18n>Últimos 30 dias</option>
+        <option value="90" data-i18n>Últimos 90 dias</option>
       </select></label>
-      <label>Deck <select id="f-deck"></select></label>
+      <label><span data-i18n>Deck</span> <select id="f-deck"></select></label>
       <span class="spacer"></span>
       <span id="filter-count" class="muted small"></span>
     </header>
@@ -58,31 +62,31 @@
     <section class="page" id="page-overview">
       <div class="kpis" id="kpis"></div>
       <div class="grid g-2-1">
-        <div class="card"><div class="card-h"><h3>Resultados por dia</h3><div class="legend" id="lg-daily"></div></div><div class="chart h260"><canvas id="c-daily"></canvas></div></div>
-        <div class="card"><div class="card-h"><h3>Vitórias × derrotas</h3></div><div class="chart h260"><canvas id="c-donut"></canvas></div></div>
+        <div class="card"><div class="card-h"><h3 data-i18n>Resultados por dia</h3><div class="legend" id="lg-daily"></div></div><div class="chart h260"><canvas id="c-daily"></canvas></div></div>
+        <div class="card"><div class="card-h"><h3 data-i18n>Vitórias × derrotas</h3></div><div class="chart h260"><canvas id="c-donut"></canvas></div></div>
       </div>
       <div class="grid g-2-1">
-        <div class="card"><div class="card-h"><h3>Taxa de vitória ao longo do tempo</h3><span class="muted small">acumulada e média móvel das últimas 10</span></div><div class="chart h240"><canvas id="c-trend"></canvas></div></div>
-        <div class="card"><div class="card-h"><h3>Play × Draw</h3><span class="muted small">por jogo</span></div><div class="chart h240"><canvas id="c-play"></canvas></div></div>
+        <div class="card"><div class="card-h"><h3 data-i18n>Taxa de vitória ao longo do tempo</h3><span class="muted small" data-i18n>acumulada e média móvel das últimas 10</span></div><div class="chart h240"><canvas id="c-trend"></canvas></div></div>
+        <div class="card"><div class="card-h"><h3 data-i18n>Play × Draw</h3><span class="muted small" data-i18n>por jogo</span></div><div class="chart h240"><canvas id="c-play"></canvas></div></div>
       </div>
       <div class="grid g-1-1">
-        <div class="card"><div class="card-h"><h3>Taxa de vitória por formato</h3></div><div class="chart" id="w-fmt"><canvas id="c-fmt"></canvas></div></div>
-        <div class="card"><div class="card-h"><h3>Decks mais usados</h3><div class="legend" id="lg-topdecks"></div></div><div class="chart" id="w-topdecks"><canvas id="c-topdecks"></canvas></div></div>
+        <div class="card"><div class="card-h"><h3 data-i18n>Taxa de vitória por formato</h3></div><div class="chart" id="w-fmt"><canvas id="c-fmt"></canvas></div></div>
+        <div class="card"><div class="card-h"><h3 data-i18n>Decks mais usados</h3><div class="legend" id="lg-topdecks"></div></div><div class="chart" id="w-topdecks"><canvas id="c-topdecks"></canvas></div></div>
       </div>
     </section>
 
     <section class="page" id="page-formats" hidden>
       <div class="grid g-1-1">
-        <div class="card"><div class="card-h"><h3>Partidas por formato</h3></div><div class="chart h280"><canvas id="c-fmtshare"></canvas></div></div>
-        <div class="card"><div class="card-h"><h3>Vitórias e derrotas por formato</h3><div class="legend" id="lg-fmtwl"></div></div><div class="chart" id="w-fmtwl"><canvas id="c-fmtwl"></canvas></div></div>
+        <div class="card"><div class="card-h"><h3 data-i18n>Partidas por formato</h3></div><div class="chart h280"><canvas id="c-fmtshare"></canvas></div></div>
+        <div class="card"><div class="card-h"><h3 data-i18n>Vitórias e derrotas por formato</h3><div class="legend" id="lg-fmtwl"></div></div><div class="chart" id="w-fmtwl"><canvas id="c-fmtwl"></canvas></div></div>
       </div>
-      <div class="card"><div class="card-h"><h3>Resumo por formato</h3></div><div class="table-wrap" id="t-formats"></div></div>
-      <div class="card"><div class="card-h"><h3>Resumo por evento</h3><span class="muted small">nome interno da fila no Arena</span></div><div class="table-wrap" id="t-events"></div></div>
+      <div class="card"><div class="card-h"><h3 data-i18n>Resumo por formato</h3></div><div class="table-wrap" id="t-formats"></div></div>
+      <div class="card"><div class="card-h"><h3 data-i18n>Resumo por evento</h3><span class="muted small" data-i18n>nome interno da fila no Arena</span></div><div class="table-wrap" id="t-events"></div></div>
     </section>
 
     <section class="page" id="page-decks" hidden>
       <div id="deck-list">
-        <div class="card"><div class="card-h"><h3>Seus decks</h3><span class="muted small">clique em um deck para ver os detalhes</span></div><div class="table-wrap" id="t-decks"></div></div>
+        <div class="card"><div class="card-h"><h3 data-i18n>Seus decks</h3><span class="muted small" data-i18n>clique em um deck para ver os detalhes</span></div><div class="table-wrap" id="t-decks"></div></div>
       </div>
       <div id="deck-detail" hidden></div>
     </section>
@@ -90,64 +94,64 @@
     <section class="page" id="page-cards" hidden>
       <div class="toolbar">
         <div class="seg" id="cards-side">
-          <button data-side="me" class="active">Minhas cartas</button>
-          <button data-side="opp">Cartas dos oponentes</button>
+          <button data-side="me" class="active" data-i18n>Minhas cartas</button>
+          <button data-side="opp" data-i18n>Cartas dos oponentes</button>
         </div>
-        <input id="cards-search" type="search" placeholder="Buscar carta…">
-        <label class="muted small">Mín. de jogos <select id="cards-min"><option>1</option><option selected>2</option><option>3</option><option>5</option><option>10</option></select></label>
-        <label class="muted small"><input type="checkbox" id="cards-lands"> incluir terrenos</label>
+        <input id="cards-search" type="search" placeholder="Buscar carta…" data-i18n-placeholder>
+        <label class="muted small"><span data-i18n>Mín. de jogos</span> <select id="cards-min"><option>1</option><option selected>2</option><option>3</option><option>5</option><option>10</option></select></label>
+        <label class="muted small"><input type="checkbox" id="cards-lands"> <span data-i18n>incluir terrenos</span></label>
       </div>
       <div class="grid g-1-1">
         <div class="card"><div class="card-h"><h3 id="cards-chart-title">Cartas mais vistas</h3></div><div class="chart" id="w-cards"><canvas id="c-cards"></canvas></div></div>
-        <div class="card"><div class="card-h"><h3>Curva de mana</h3><span class="muted small">cartas distintas vistas, sem terrenos</span></div><div class="chart h300"><canvas id="c-curve"></canvas></div></div>
+        <div class="card"><div class="card-h"><h3 data-i18n>Curva de mana</h3><span class="muted small" data-i18n>cartas distintas vistas, sem terrenos</span></div><div class="chart h300"><canvas id="c-curve"></canvas></div></div>
       </div>
       <div class="card"><div class="card-h"><h3 id="cards-table-title">Desempenho por carta</h3><span class="muted small" id="cards-hint"></span></div><div class="table-wrap" id="t-cards"></div></div>
     </section>
 
     <section class="page" id="page-opponents" hidden>
       <div class="grid g-1-1">
-        <div class="card"><div class="card-h"><h3>Sua taxa de vitória contra cada combinação de cores</h3></div><div class="chart" id="w-oppcol"><canvas id="c-oppcol"></canvas></div></div>
-        <div class="card"><div class="card-h"><h3>Cores mais enfrentadas</h3><span class="muted small">presença de cada cor nos decks adversários</span></div><div class="chart h300"><canvas id="c-oppmono"></canvas></div></div>
+        <div class="card"><div class="card-h"><h3 data-i18n>Sua taxa de vitória contra cada combinação de cores</h3></div><div class="chart" id="w-oppcol"><canvas id="c-oppcol"></canvas></div></div>
+        <div class="card"><div class="card-h"><h3 data-i18n>Cores mais enfrentadas</h3><span class="muted small" data-i18n>presença de cada cor nos decks adversários</span></div><div class="chart h300"><canvas id="c-oppmono"></canvas></div></div>
       </div>
       <div class="grid g-1-1">
-        <div class="card"><div class="card-h"><h3>Por combinação de cores</h3></div><div class="table-wrap" id="t-oppcol"></div></div>
-        <div class="card"><div class="card-h"><h3>Oponentes repetidos</h3></div><div class="table-wrap" id="t-oppnames"></div></div>
+        <div class="card"><div class="card-h"><h3 data-i18n>Por combinação de cores</h3></div><div class="table-wrap" id="t-oppcol"></div></div>
+        <div class="card"><div class="card-h"><h3 data-i18n>Oponentes repetidos</h3></div><div class="table-wrap" id="t-oppnames"></div></div>
       </div>
     </section>
 
     <section class="page" id="page-matches" hidden>
-      <div class="card"><div class="card-h"><h3>Histórico de partidas</h3><span class="muted small">clique em uma partida para ver as cartas</span></div><div class="table-wrap" id="t-matches"></div></div>
+      <div class="card"><div class="card-h"><h3 data-i18n>Histórico de partidas</h3><span class="muted small" data-i18n>clique em uma partida para ver as cartas</span></div><div class="table-wrap" id="t-matches"></div></div>
     </section>
 
     <section class="page" id="page-limited" hidden>
       <div class="kpis" id="limited-kpis"></div>
-      <div class="card"><div class="card-h"><h3>Drafts realizados</h3><span class="muted small">clique em um draft para ver as partidas</span></div><div class="table-wrap" id="t-limited"></div></div>
+      <div class="card"><div class="card-h"><h3 data-i18n>Drafts realizados</h3><span class="muted small" data-i18n>clique em um draft para ver as partidas</span></div><div class="table-wrap" id="t-limited"></div></div>
     </section>
 
     <section class="page" id="page-craft" hidden>
       <div class="craft">
         <div class="card craft-input">
-          <div class="card-h"><h3>Lista do deck</h3><span class="muted small">cole no formato de exportação do Arena</span></div>
+          <div class="card-h"><h3 data-i18n>Lista do deck</h3><span class="muted small" data-i18n>cole no formato de exportação do Arena</span></div>
           <textarea id="craft-text" spellcheck="false" placeholder="Deck&#10;4 Lightning Bolt (STA) 42&#10;4 Sheoldred, the Apocalypse (DMU) 107&#10;20 Swamp&#10;&#10;Sideboard&#10;2 Duress"></textarea>
           <div class="craft-actions">
-            <button id="craft-check" class="btn primary">Verificar</button>
-            <button id="craft-clear" class="btn ghost">Limpar</button>
+            <button id="craft-check" class="btn primary" data-i18n>Verificar</button>
+            <button id="craft-clear" class="btn ghost" data-i18n>Limpar</button>
           </div>
           <div class="craft-col">
             <div id="craft-col-info" class="muted small"></div>
-            <button id="craft-reread" class="btn ghost small">Reler coleção do Arena</button>
+            <button id="craft-reread" class="btn ghost small" data-i18n>Reler coleção do Arena</button>
           </div>
         </div>
         <div class="craft-out">
           <div id="craft-verdict" class="craft-verdict" hidden></div>
           <div class="card">
-            <div class="card-h"><h3>Cartas faltando e wildcards</h3><span class="muted small">por raridade</span></div>
+            <div class="card-h"><h3 data-i18n>Cartas faltando e wildcards</h3><span class="muted small" data-i18n>por raridade</span></div>
             <div class="wc-grid" id="craft-wc"></div>
           </div>
           <div class="card craft-list">
-            <div class="card-h"><h3>Cartas do deck</h3><span class="muted small" id="craft-hint"></span>
-              <label class="small muted craft-only"><input type="checkbox" id="craft-only-missing"> só as que faltam</label></div>
-            <div class="table-wrap" id="t-craft"><div class="empty" style="height:140px">Cole uma lista à esquerda e clique em Verificar.</div></div>
+            <div class="card-h"><h3 data-i18n>Cartas do deck</h3><span class="muted small" id="craft-hint"></span>
+              <label class="small muted craft-only"><input type="checkbox" id="craft-only-missing"> <span data-i18n>só as que faltam</span></label></div>
+            <div class="table-wrap" id="t-craft"><div class="empty" style="height:140px" data-i18n>Cole uma lista à esquerda e clique em Verificar.</div></div>
           </div>
         </div>
       </div>
@@ -156,6 +160,7 @@
 </div>
 <div id="card-preview" class="card-preview" hidden><img alt=""></div>
 <div id="tip" class="tip" hidden></div>
+<script src="i18n.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

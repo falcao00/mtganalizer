@@ -26,7 +26,8 @@ const COMBOS = {
 const COLOR_NAMES = { W: "Branco", U: "Azul", B: "Preto", R: "Vermelho", G: "Verde" };
 const RARITY_PT = { common: "Comum", uncommon: "Incomum", rare: "Rara", mythic: "Mítica", basic: "Básica", token: "Ficha" };
 
-function formatOf(m) {
+const formatOf = m => t(formatKey(m));
+function formatKey(m) {
   const e = m.event || "";
   if (/Draft/i.test(e)) return "Draft";
   if (/Sealed/i.test(e)) return "Selado";
@@ -42,7 +43,8 @@ function formatOf(m) {
   if (/Ladder|Play|Constructed|Standard/i.test(e)) return "Padrão";
   return m.deckFormat || e || "Outro";
 }
-function queueOf(m) {
+const queueOf = m => t(queueKey(m));
+function queueKey(m) {
   const e = m.event || "";
   if (/Ladder/i.test(e)) return "Ranqueada";
   if (/Draft|Sealed/i.test(e)) return "Limitado";
@@ -51,7 +53,8 @@ function queueOf(m) {
   return "Evento";
 }
 const sortColors = s => "WUBRG".split("").filter(c => s.includes(c)).join("");
-const comboName = c => COMBOS[c] || `${c.length} cores`;
+const comboName = c => COMBOS[c] ? t(COMBOS[c]) : tn(c.length, "{n} cor", "{n} cores");
+const rarityName = r => RARITY_PT[r] ? t(RARITY_PT[r]) : "";
 const card = id => state.data.cards[String(id)];
 
 /* Cores que o deck realmente exige, pelos símbolos de mana: um híbrido como {(G/W)}
@@ -111,9 +114,10 @@ function groupBy(arr, fn) {
 
 /* --------------------------------------------------------------- formatação */
 const pct = x => x == null ? "—" : `${Math.round(x * 100)}%`;
-const num = x => (x ?? 0).toLocaleString("pt-BR");
-const fmtDate = d => d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" });
-const fmtDateTime = d => d.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+const num = x => (x ?? 0).toLocaleString(LOCALE());
+const fmtDate = d => d.toLocaleDateString(LOCALE(), { day: "2-digit", month: "2-digit", year: "2-digit" });
+const fmtDateTime = d => d.toLocaleString(LOCALE(), { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+const keyDate = k => { const [y, mo, d] = k.split("-"); return new Date(+y, mo - 1, +d); };
 const dayKey = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 function pips(c) {
   if (!c) return `<span class="pips"><span class="pip C">C</span></span>`;
@@ -124,8 +128,8 @@ function wrCell(wr) {
   return `<span class="wr">${pct(wr)}<span class="meter"><b style="width:${Math.round(wr * 100)}%"></b></span></span>`;
 }
 function resultBadge(r) {
-  const t = { win: "Vitória", loss: "Derrota", draw: "Empate" }[r] || "—";
-  return `<span class="badge ${r}">${t}</span>`;
+  const label = { win: "Vitória", loss: "Derrota", draw: "Empate" }[r];
+  return `<span class="badge ${r}">${label ? t(label) : "—"}</span>`;
 }
 function cardName(id) {
   const c = card(id);
@@ -145,11 +149,11 @@ function fillSelect(id, values, allLabel) {
 
 function buildFilterOptions() {
   const count = (fn) => [...groupBy(state.all, fn)].sort((a, b) => b[1].length - a[1].length);
-  fillSelect("f-format", count(m => m.fmt).map(([k, v]) => [k, `${k} (${v.length})`]), "Todos");
-  fillSelect("f-queue", count(m => m.queue).map(([k, v]) => [k, `${k} (${v.length})`]), "Todas");
+  fillSelect("f-format", count(m => m.fmt).map(([k, v]) => [k, `${k} (${v.length})`]), t("Todos"));
+  fillSelect("f-queue", count(m => m.queue).map(([k, v]) => [k, `${k} (${v.length})`]), t("Todas"));
   const fmt = $("#f-format").value;
   const decks = count(m => m.deckKey).filter(([, v]) => !fmt || v.some(m => m.fmt === fmt));
-  fillSelect("f-deck", decks.map(([k, v]) => [k, `${v[v.length - 1].deckName} (${v.length})`]), "Todos");
+  fillSelect("f-deck", decks.map(([k, v]) => [k, `${v[v.length - 1].deckName} (${v.length})`]), t("Todos"));
 }
 
 function applyFilters() {
@@ -164,7 +168,7 @@ function applyFilters() {
     (!f["f-bo"] || m.bo === f["f-bo"]) &&
     (!f["f-deck"] || m.deckKey === f["f-deck"]) &&
     (!since || m.date.getTime() >= since));
-  $("#filter-count").textContent = `${num(state.filtered.length)} de ${num(state.all.length)} partidas`;
+  $("#filter-count").textContent = t("{a} de {b} partidas", { a: num(state.filtered.length), b: num(state.all.length) });
 }
 
 /* ------------------------------------------------------------------ gráficos */
@@ -178,12 +182,12 @@ const valueLabels = {
     ctx.fillStyle = cssVar("--text-2");
     ctx.font = "12px system-ui, 'Segoe UI', sans-serif";
     meta.data.forEach((el, i) => {
-      const t = o.format(i);
-      if (!t) return;
+      const txt = o.format(i);
+      if (!txt) return;
       if (chart.options.indexAxis === "y") {
-        ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText(t, el.x + 6, el.y);
+        ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText(txt, el.x + 6, el.y);
       } else {
-        ctx.textAlign = "center"; ctx.textBaseline = "bottom"; ctx.fillText(t, el.x, el.y - 4);
+        ctx.textAlign = "center"; ctx.textBaseline = "bottom"; ctx.fillText(txt, el.x, el.y - 4);
       }
     });
     ctx.restore();
@@ -261,16 +265,16 @@ const noGrid = { grid: { display: false }, border: { color: cssVar("--axis") } }
 /* barra empilhada V/D horizontal */
 function wlBars(id, wrapId, legendId, rows) {
   sizeFor(wrapId, rows.length);
-  legend(legendId, [["Vitórias", cssVar("--win")], ["Derrotas", cssVar("--loss")]]);
+  legend(legendId, [[t("Vitórias"), cssVar("--win")], [t("Derrotas"), cssVar("--loss")]]);
   const surface = cssVar("--surface");
   draw(id, {
     type: "bar",
     data: {
       labels: rows.map(r => r.label),
       datasets: [
-        { label: "Vitórias", data: rows.map(r => r.s.w), backgroundColor: cssVar("--win"), borderRadius: 0, borderSkipped: false,
+        { label: t("Vitórias"), data: rows.map(r => r.s.w), backgroundColor: cssVar("--win"), borderRadius: 0, borderSkipped: false,
           borderColor: surface, borderWidth: { right: 0 }, maxBarThickness: 18 },
-        { label: "Derrotas", data: rows.map(r => r.s.l), backgroundColor: cssVar("--loss"),
+        { label: t("Derrotas"), data: rows.map(r => r.s.l), backgroundColor: cssVar("--loss"),
           borderRadius: { topRight: 4, bottomRight: 4 }, borderSkipped: false,
           borderColor: surface, borderWidth: { left: 2 }, maxBarThickness: 18 },
       ],
@@ -280,19 +284,19 @@ function wlBars(id, wrapId, legendId, rows) {
       scales: { x: { stacked: true, ticks: { precision: 0 }, grid: { color: cssVar("--grid") }, border: { display: false } },
                 y: { stacked: true, ...noGrid, ticks: { color: cssVar("--text-2") } } },
       plugins: {
-        tooltip: { mode: "index", intersect: false, callbacks: { footer: it => `Taxa de vitória: ${pct(rows[it[0].dataIndex].s.wr)}` } },
+        tooltip: { mode: "index", intersect: false, callbacks: { footer: it => t("Taxa de vitória: {p}", { p: pct(rows[it[0].dataIndex].s.wr) }) } },
         valueLabels: { format: i => `${pct(rows[i].s.wr)} · ${rows[i].s.n}` },
       },
     },
-  }, rows.length ? null : "Sem partidas no filtro atual");
+  }, rows.length ? null : t("Sem partidas no filtro atual"));
 }
 
 /* barra de taxa de vitória (série única) */
-function wrBars(id, wrapId, rows, { horizontal = true, sub = r => `${r.s.n} partidas` } = {}) {
+function wrBars(id, wrapId, rows, { horizontal = true, sub = r => tn(r.s.n, "{n} partida", "{n} partidas") } = {}) {
   if (horizontal) sizeFor(wrapId, rows.length);
   draw(id, {
     type: "bar",
-    data: { labels: rows.map(r => r.label), datasets: [{ label: "Taxa de vitória", data: rows.map(r => r.s.wr ?? 0),
+    data: { labels: rows.map(r => r.label), datasets: [{ label: t("Taxa de vitória"), data: rows.map(r => r.s.wr ?? 0),
       backgroundColor: cssVar("--accent"), borderRadius: 4, borderSkipped: "start", maxBarThickness: horizontal ? 18 : 56 }] },
     options: {
       indexAxis: horizontal ? "y" : "x",
@@ -301,11 +305,11 @@ function wrBars(id, wrapId, rows, { horizontal = true, sub = r => `${r.s.n} part
                          : { y: axisWR, x: { ...noGrid, ticks: { color: cssVar("--text-2") } } },
       plugins: {
         refLine: { value: 0.5 },
-        tooltip: { callbacks: { label: it => { const r = rows[it.dataIndex]; return ` ${pct(r.s.wr)} — ${r.s.w}V / ${r.s.l}D`; } } },
+        tooltip: { callbacks: { label: it => { const r = rows[it.dataIndex]; return ` ${pct(r.s.wr)} — ${t("{w}V / {l}D", { w: r.s.w, l: r.s.l })}`; } } },
         valueLabels: { datasetIndex: 0, format: i => horizontal ? `${pct(rows[i].s.wr)} · ${sub(rows[i])}` : pct(rows[i].s.wr) },
       },
     },
-  }, rows.length ? null : "Sem dados no filtro atual");
+  }, rows.length ? null : t("Sem dados no filtro atual"));
 }
 
 /* linha de taxa de vitória ao longo das partidas */
@@ -325,8 +329,8 @@ function trendLine(id, ms) {
       labels: sorted.map(m => fmtDateTime(m.date)),
       datasets: [
         // com até 10 partidas a média móvel é igual à acumulada
-        { label: "Acumulada", data: cum, borderColor: series(0), backgroundColor: series(0), borderWidth: 2, pointRadius: sorted.length > 40 ? 0 : 3, pointHoverRadius: 5, tension: 0.25 },
-        ...(sorted.length > 10 ? [{ label: "Média móvel (10)", data: roll, borderColor: series(1), backgroundColor: series(1), borderWidth: 2, pointRadius: 0, pointHoverRadius: 5, tension: 0.25 }] : []),
+        { label: t("Acumulada"), data: cum, borderColor: series(0), backgroundColor: series(0), borderWidth: 2, pointRadius: sorted.length > 40 ? 0 : 3, pointHoverRadius: 5, tension: 0.25 },
+        ...(sorted.length > 10 ? [{ label: t("Média móvel (10)"), data: roll, borderColor: series(1), backgroundColor: series(1), borderWidth: 2, pointRadius: 0, pointHoverRadius: 5, tension: 0.25 }] : []),
       ],
     },
     options: {
@@ -336,10 +340,10 @@ function trendLine(id, ms) {
         legend: { display: true, position: "top", align: "end", labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle: "rectRounded", color: cssVar("--text-2") } },
         refLine: { value: 0.5 },
         tooltip: { callbacks: { label: it => ` ${it.dataset.label}: ${pct(it.parsed.y)}`,
-          afterBody: it => { const m = sorted[it[0].dataIndex]; return `${m.result === "win" ? "Vitória" : m.result === "loss" ? "Derrota" : "Empate"} vs ${m.opponent || "?"} · ${m.deckName}`; } } },
+          afterBody: it => { const m = sorted[it[0].dataIndex]; return `${t(m.result === "win" ? "Vitória" : m.result === "loss" ? "Derrota" : "Empate")} vs ${m.opponent || "?"} · ${m.deckName}`; } } },
       },
     },
-  }, sorted.length >= 2 ? null : "São necessárias ao menos 2 partidas");
+  }, sorted.length >= 2 ? null : t("São necessárias ao menos 2 partidas"));
 }
 
 /* ----------------------------------------------------------------- tabelas */
@@ -358,9 +362,9 @@ function table(el, cols, rows, { onRow, sortKey, sortDir = -1, rowAttrs } = {}) 
       return (x < y ? -1 : x > y ? 1 : 0) * st.dir;
     });
   }
-  if (!rows.length) { el.innerHTML = `<div class="empty" style="height:80px">Nada para mostrar no filtro atual</div>`; return; }
+  if (!rows.length) { el.innerHTML = `<div class="empty" style="height:80px">${t("Nada para mostrar no filtro atual")}</div>`; return; }
   el.innerHTML = `<table><thead><tr>${cols.map(c =>
-    `<th data-k="${c.key}" class="${c.num ? "num" : ""} ${c.cls === "center" ? "center" : ""} ${st.key === c.key ? "sorted" + (st.dir > 0 ? " asc" : "") : ""}">${c.label}</th>`).join("")}</tr></thead>
+    `<th data-k="${c.key}" class="${c.num ? "num" : ""} ${c.cls === "center" ? "center" : ""} ${st.key === c.key ? "sorted" + (st.dir > 0 ? " asc" : "") : ""}">${t(c.label)}</th>`).join("")}</tr></thead>
     <tbody>${rows.map((r, i) => `<tr data-i="${i}" class="${onRow ? "clickable" : ""}" ${rowAttrs ? rowAttrs(r) : ""}>${cols.map(c =>
       `<td class="${c.num ? "num" : ""} ${c.cls || ""}">${c.html ? c.html(r) : esc(r[c.key])}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
   $$("th", el).forEach(th => th.onclick = () => {
@@ -396,12 +400,13 @@ function renderOverview() {
   const decks = new Set(ms.map(m => m.deckKey)).size;
   const kpi = (label, value, sub = "", extra = "") => `<div class="kpi"><div class="label">${label}</div><div class="value">${value}</div><div class="sub">${sub}</div>${extra}</div>`;
   $("#kpis").innerHTML = [
-    kpi("Partidas", num(s.n), `${decks} deck${decks === 1 ? "" : "s"} usado${decks === 1 ? "" : "s"}`),
-    kpi("Taxa de vitória", pct(s.wr), `${s.w}V – ${s.l}D${s.d ? ` – ${s.d}E` : ""}`,
+    kpi(t("Partidas"), num(s.n), tn(decks, "{n} deck usado", "{n} decks usados")),
+    kpi(t("Taxa de vitória"), pct(s.wr), t("{w}V – {l}D", { w: s.w, l: s.l }) + (s.d ? t(" – {d}E", { d: s.d }) : ""),
       s.n ? `<div class="bar"><b style="width:${(s.w / s.n) * 100}%"></b></div>` : ""),
-    kpi("Jogos (games)", `${gw}–${gl}`, `taxa por jogo ${pct(gw + gl ? gw / (gw + gl) : null)}`),
-    kpi("Sequência atual", st.cur ? `${st.cur} ${st.kind === "win" ? (st.cur > 1 ? "vitórias" : "vitória") : st.kind === "loss" ? (st.cur > 1 ? "derrotas" : "derrota") : "empates"}` : "—",
-      `melhor: ${st.best} vitória${st.best === 1 ? "" : "s"} seguida${st.best === 1 ? "" : "s"}`),
+    kpi(t("Jogos (games)"), `${gw}–${gl}`, t("taxa por jogo {p}", { p: pct(gw + gl ? gw / (gw + gl) : null) })),
+    kpi(t("Sequência atual"), !st.cur ? "—" : st.kind === "win" ? tn(st.cur, "{n} vitória", "{n} vitórias")
+      : st.kind === "loss" ? tn(st.cur, "{n} derrota", "{n} derrotas") : tn(st.cur, "{n} empate", "{n} empates"),
+      tn(st.best, "melhor: {n} vitória seguida", "melhor: {n} vitórias seguidas")),
   ].join("");
 
   // resultados por dia (ou semana quando o período é longo)
@@ -414,42 +419,42 @@ function renderOverview() {
       const d = new Date(m.date); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return dayKey(d);
     })];
   }
-  const labels = buckets.map(([k]) => { const [y, mo, d] = k.split("-"); return `${d}/${mo}${weekly ? "" : ""}`; });
+  const labels = buckets.map(([k]) => keyDate(k).toLocaleDateString(LOCALE(), { day: "2-digit", month: "2-digit" }));
   const ws = buckets.map(([, v]) => wl(v).w), ls = buckets.map(([, v]) => wl(v).l);
-  legend("lg-daily", [["Vitórias", cssVar("--win")], ["Derrotas", cssVar("--loss")]]);
+  legend("lg-daily", [[t("Vitórias"), cssVar("--win")], [t("Derrotas"), cssVar("--loss")]]);
   const surface = cssVar("--surface");
   draw("c-daily", {
     type: "bar",
     data: { labels, datasets: [
-      { label: "Vitórias", data: ws, backgroundColor: cssVar("--win"), maxBarThickness: 28, borderSkipped: false,
+      { label: t("Vitórias"), data: ws, backgroundColor: cssVar("--win"), maxBarThickness: 28, borderSkipped: false,
         borderRadius: c => ls[c.dataIndex] ? 0 : { topLeft: 4, topRight: 4 } },
-      { label: "Derrotas", data: ls, backgroundColor: cssVar("--loss"), maxBarThickness: 28, borderSkipped: false,
+      { label: t("Derrotas"), data: ls, backgroundColor: cssVar("--loss"), maxBarThickness: 28, borderSkipped: false,
         borderRadius: { topLeft: 4, topRight: 4 }, borderColor: surface, borderWidth: c => ws[c.dataIndex] ? { bottom: 2 } : 0 },
     ] },
     options: {
       scales: { x: { stacked: true, ...noGrid, ticks: { maxRotation: 0, autoSkipPadding: 12 } },
                 y: { stacked: true, ticks: { precision: 0 }, grid: { color: cssVar("--grid") }, border: { display: false } } },
       plugins: { tooltip: { mode: "index", intersect: false, callbacks: {
-        title: it => (weekly ? "Semana de " : "") + buckets[it[0].dataIndex][0].split("-").reverse().join("/"),
-        footer: it => `Taxa de vitória: ${pct(wl(buckets[it[0].dataIndex][1]).wr)}` } } },
+        title: it => { const d = fmtDate(keyDate(buckets[it[0].dataIndex][0])); return weekly ? t("Semana de {d}", { d }) : d; },
+        footer: it => t("Taxa de vitória: {p}", { p: pct(wl(buckets[it[0].dataIndex][1]).wr) }) } } },
     },
-  }, ms.length ? null : "Sem partidas no filtro atual");
+  }, ms.length ? null : t("Sem partidas no filtro atual"));
 
   // rosca V/D
   draw("c-donut", {
     type: "doughnut",
-    data: { labels: ["Vitórias", "Derrotas", "Empates"], datasets: [{ data: [s.w, s.l, s.d],
+    data: { labels: [t("Vitórias"), t("Derrotas"), t("Empates")], datasets: [{ data: [s.w, s.l, s.d],
       backgroundColor: [cssVar("--win"), cssVar("--loss"), cssVar("--draw")], borderColor: surface, borderWidth: 2, hoverOffset: 4 }] },
     options: {
       cutout: "70%",
       plugins: {
         legend: { display: true, position: "bottom", labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle: "rectRounded", color: cssVar("--text-2"),
           filter: (it, d) => d.datasets[0].data[it.index] > 0 } },
-        centerText: { text: pct(s.wr), sub: "taxa de vitória" },
+        centerText: { text: pct(s.wr), sub: t("taxa de vitória") },
         tooltip: { callbacks: { label: it => ` ${it.label}: ${it.parsed} (${pct(it.parsed / s.n)})` } },
       },
     },
-  }, s.n ? null : "Sem partidas");
+  }, s.n ? null : t("Sem partidas"));
 
   trendLine("c-trend", ms);
 
@@ -462,7 +467,7 @@ function renderOverview() {
   wrBars("c-play", null, pd, { horizontal: false });
   if (state.charts["c-play"]) {
     state.charts["c-play"].options.plugins.valueLabels.format = i => pd[i].s.n ? `${pct(pd[i].s.wr)} (${pd[i].s.n})` : "—";
-    state.charts["c-play"].options.plugins.tooltip.callbacks.label = it => { const r = pd[it.dataIndex].s; return ` ${pct(r.wr)} — ${r.w}V / ${r.l}D em ${r.n} jogos`; };
+    state.charts["c-play"].options.plugins.tooltip.callbacks.label = it => { const r = pd[it.dataIndex].s; return ` ${pct(r.wr)} — ${t("{w}V / {l}D em {n} jogos", { w: r.w, l: r.l, n: r.n })}`; };
     state.charts["c-play"].update();
   }
 
@@ -493,17 +498,17 @@ function renderFormats() {
   // participação: até 7 formatos + "Outros"
   const share = rows.slice(0, 7);
   const rest = rows.slice(7).reduce((a, r) => a + r.n, 0);
-  const labels = [...share.map(r => r.fmt), ...(rest ? ["Outros"] : [])];
+  const labels = [...share.map(r => r.fmt), ...(rest ? [t("Outros")] : [])];
   const data = [...share.map(r => r.n), ...(rest ? [rest] : [])];
   draw("c-fmtshare", {
     type: "doughnut",
-    data: { labels, datasets: [{ data, backgroundColor: labels.map(l => l === "Outros" ? cssVar("--muted") : colorOf(l)), borderColor: cssVar("--surface"), borderWidth: 2 }] },
+    data: { labels, datasets: [{ data, backgroundColor: labels.map(l => l === t("Outros") ? cssVar("--muted") : colorOf(l)), borderColor: cssVar("--surface"), borderWidth: 2 }] },
     options: { cutout: "62%", plugins: {
       legend: { display: true, position: "right", labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle: "rectRounded", color: cssVar("--text-2"),
         generateLabels: ch => ch.data.labels.map((l, i) => ({ text: `${l}  ${data[i]} (${pct(data[i] / ms.length)})`, fillStyle: ch.data.datasets[0].backgroundColor[i], strokeStyle: "transparent", pointStyle: "rectRounded", index: i, fontColor: cssVar("--text-2") })) } },
-      centerText: { text: num(ms.length), sub: "partidas" },
-      tooltip: { callbacks: { label: it => ` ${it.label}: ${it.parsed} partidas (${pct(it.parsed / ms.length)})` } } } },
-  }, ms.length ? null : "Sem partidas");
+      centerText: { text: num(ms.length), sub: t("partidas") },
+      tooltip: { callbacks: { label: it => ` ${it.label}: ${t("{n} partidas ({p})", { n: it.parsed, p: pct(it.parsed / ms.length) })}` } } } },
+  }, ms.length ? null : t("Sem partidas"));
 
   wlBars("c-fmtwl", "w-fmtwl", "lg-fmtwl", rows);
 
@@ -610,23 +615,23 @@ function renderDeckHistory(deckKey) {
   // usa todas as partidas do deck (ignora o filtro de período) para o histórico ficar completo
   const versions = deckVersions(state.all.filter(m => m.deckKey === deckKey));
   const el = $("#deck-history");
-  if (!versions.length) { el.innerHTML = `<div class="empty" style="height:60px">Nenhuma lista registrada para este deck</div>`; return; }
+  if (!versions.length) { el.innerHTML = `<div class="empty" style="height:60px">${t("Nenhuma lista registrada para este deck")}</div>`; return; }
   const byName = (a, b) => (card(a[0])?.name || "").localeCompare(card(b[0])?.name || "");
   const list = (items, sign) => items.sort(byName).map(([id, n]) => `<span class="chg ${sign === "+" ? "in" : "out"}">${sign}${n} ${cardName(id)}</span>`).join("");
   el.innerHTML = versions.map((v, i) => {
     const s = wl(v.matches), first = v.matches[0].date, last = v.matches[v.matches.length - 1].date;
     const changes = i === 0
-      ? `<div class="muted small">Primeira lista registrada · ${v.size} cartas</div>`
+      ? `<div class="muted small">${t("Primeira lista registrada · {n} cartas", { n: v.size })}</div>`
       : `<div class="chg-cols">
-           <div><h4>Entraram</h4><div class="chips">${list(v.added, "+") || "<span class='muted'>—</span>"}</div></div>
-           <div><h4>Saíram</h4><div class="chips">${list(v.removed, "−") || "<span class='muted'>—</span>"}</div></div>
+           <div><h4>${t("Entraram")}</h4><div class="chips">${list(v.added, "+") || "<span class='muted'>—</span>"}</div></div>
+           <div><h4>${t("Saíram")}</h4><div class="chips">${list(v.removed, "−") || "<span class='muted'>—</span>"}</div></div>
          </div>`;
     return `<div class="version">
       <div class="version-h">
-        <b>Versão ${i + 1}</b>${i === versions.length - 1 ? ` <span class="badge">atual</span>` : ""}
+        <b>${t("Versão {n}", { n: i + 1 })}</b>${i === versions.length - 1 ? ` <span class="badge">${t("atual")}</span>` : ""}
         <span class="muted small">${fmtDateTime(first)}${v.matches.length > 1 ? ` → ${fmtDateTime(last)}` : ""}</span>
         <span class="spacer"></span>
-        <span class="small">${s.n} partida${s.n === 1 ? "" : "s"} · <b>${s.w}–${s.l}</b> · ${pct(s.wr)}</span>
+        <span class="small">${tn(s.n, "{n} partida", "{n} partidas")} · <b>${s.w}–${s.l}</b> · ${pct(s.wr)}</span>
       </div>${changes}</div>`;
   }).reverse().join("");
 }
@@ -635,7 +640,7 @@ function renderDeckHistory(deckKey) {
 function renderDeckVisual(deckKey) {
   const versions = deckVersions(state.all.filter(m => m.deckKey === deckKey));
   const el = $("#deck-visual");
-  if (!versions.length) { el.innerHTML = `<div class="empty" style="height:60px">Nenhuma lista registrada para este deck</div>`; return; }
+  if (!versions.length) { el.innerHTML = `<div class="empty" style="height:60px">${t("Nenhuma lista registrada para este deck")}</div>`; return; }
   const cur = versions[versions.length - 1];
   const commander = new Set(cur.matches[cur.matches.length - 1].command.map(x => x[0]));
   // edições diferentes da mesma carta viram uma pilha só
@@ -653,10 +658,10 @@ function renderDeckVisual(deckKey) {
     cols.get(key).push([id, n]);
   }
   const order = ["cmd", 0, 1, 2, 3, 4, 5, 6, 7, "land"];
-  const label = k => k === "cmd" ? "Comandante" : k === "land" ? "Terrenos" : k === 7 ? "7+" : String(k);
+  const label = k => k === "cmd" ? t("Comandante") : k === "land" ? t("Terrenos") : k === 7 ? "7+" : String(k);
   const colorRank = c => { const s = sortColors(c?.colors || ""); return s.length > 1 ? 5 : s ? "WUBRG".indexOf(s) : 6; };
   const byColorName = (a, b) => (colorRank(card(a[0])) - colorRank(card(b[0]))) || (card(a[0])?.name || "").localeCompare(card(b[0])?.name || "");
-  $("#deck-list-sub").textContent = `${cur.size} cartas · versão ${versions.length} (atual) · por valor de mana, do menor para o maior`;
+  $("#deck-list-sub").textContent = t("{n} cartas · versão {v} (atual) · por valor de mana, do menor para o maior", { n: cur.size, v: versions.length });
   el.innerHTML = order.filter(k => cols.has(k)).map(k => {
     const items = cols.get(k).sort(byColorName);
     const count = items.reduce((a, [, n]) => a + n, 0);
@@ -724,24 +729,24 @@ function renderDeckDetail(d) {
   const avgTurns = gs.length ? (gs.reduce((a, g) => a + g.turns, 0) / gs.length).toFixed(1) : "—";
   el.innerHTML = `
     <div class="page">
-      <div><button class="back" id="deck-back">← Todos os decks</button></div>
+      <div><button class="back" id="deck-back">${t("← Todos os decks")}</button></div>
       <div class="deck-head"><h2>${esc(d.name)}</h2>${pips(d.colors)}<span class="muted">${esc(d.fmt)}</span></div>
       <div class="kpis">
-        <div class="kpi"><div class="label">Partidas</div><div class="value">${d.n}</div><div class="sub">última: ${fmtDateTime(d.last)}</div></div>
-        <div class="kpi"><div class="label">Taxa de vitória</div><div class="value">${pct(d.wr)}</div><div class="sub">${d.w}V – ${d.l}D</div><div class="bar"><b style="width:${(d.w / d.n) * 100}%"></b></div></div>
-        <div class="kpi"><div class="label">Jogos (games)</div><div class="value">${gw}–${gl}</div><div class="sub">&nbsp;</div></div>
-        <div class="kpi"><div class="label">Play</div><div class="value">${pct(d.play)}</div><div class="sub">${gs.filter(g => g.on_play === true).length} jogos</div></div>
-        <div class="kpi"><div class="label">Draw</div><div class="value">${pct(d.draw)}</div><div class="sub">${gs.filter(g => g.on_play === false).length} jogos</div></div>
-        <div class="kpi"><div class="label">Turnos por jogo</div><div class="value">${avgTurns}</div><div class="sub">média</div></div>
+        <div class="kpi"><div class="label">${t("Partidas")}</div><div class="value">${d.n}</div><div class="sub">${t("última: {d}", { d: fmtDateTime(d.last) })}</div></div>
+        <div class="kpi"><div class="label">${t("Taxa de vitória")}</div><div class="value">${pct(d.wr)}</div><div class="sub">${t("{w}V – {l}D", { w: d.w, l: d.l })}</div><div class="bar"><b style="width:${(d.w / d.n) * 100}%"></b></div></div>
+        <div class="kpi"><div class="label">${t("Jogos (games)")}</div><div class="value">${gw}–${gl}</div><div class="sub">&nbsp;</div></div>
+        <div class="kpi"><div class="label">Play</div><div class="value">${pct(d.play)}</div><div class="sub">${t("{n} jogos", { n: gs.filter(g => g.on_play === true).length })}</div></div>
+        <div class="kpi"><div class="label">Draw</div><div class="value">${pct(d.draw)}</div><div class="sub">${t("{n} jogos", { n: gs.filter(g => g.on_play === false).length })}</div></div>
+        <div class="kpi"><div class="label">${t("Turnos por jogo")}</div><div class="value">${avgTurns}</div><div class="sub">${t("média")}</div></div>
       </div>
       <div class="grid g-1-1">
-        <div class="card"><div class="card-h"><h3>Taxa de vitória ao longo do tempo</h3></div><div class="chart h240"><canvas id="c-deck-trend"></canvas></div></div>
-        <div class="card"><div class="card-h"><h3>Contra cada combinação de cores</h3></div><div class="chart" id="w-deck-opp"><canvas id="c-deck-opp"></canvas></div></div>
+        <div class="card"><div class="card-h"><h3>${t("Taxa de vitória ao longo do tempo")}</h3></div><div class="chart h240"><canvas id="c-deck-trend"></canvas></div></div>
+        <div class="card"><div class="card-h"><h3>${t("Contra cada combinação de cores")}</h3></div><div class="chart" id="w-deck-opp"><canvas id="c-deck-opp"></canvas></div></div>
       </div>
-      <div class="card"><div class="card-h"><h3>Histórico de mudanças</h3>
-        <span class="muted small">cartas que entraram e saíram entre uma partida e outra, com o desempenho de cada versão</span></div>
+      <div class="card"><div class="card-h"><h3>${t("Histórico de mudanças")}</h3>
+        <span class="muted small">${t("cartas que entraram e saíram entre uma partida e outra, com o desempenho de cada versão")}</span></div>
         <div id="deck-history" class="history"></div></div>
-      <div class="card"><div class="card-h"><h3>Lista do deck</h3>
+      <div class="card"><div class="card-h"><h3>${t("Lista do deck")}</h3>
         <span class="muted small" id="deck-list-sub"></span></div>
         <div id="deck-visual" class="deck-visual"></div></div>
     </div>`;
@@ -775,40 +780,40 @@ function renderCards() {
   const forCurve = rows;
   rows = rows.filter(r => r.games >= minG && (!q || r.name.toLowerCase().includes(q) || r.name_en.toLowerCase().includes(q)));
 
-  $("#cards-chart-title").textContent = side === "me" ? "Suas cartas mais vistas" : "Cartas que você mais enfrentou";
-  $("#cards-table-title").textContent = side === "me" ? "Desempenho das suas cartas" : "Cartas dos oponentes";
-  $("#cards-hint").textContent = side === "me"
+  $("#cards-chart-title").textContent = t(side === "me" ? "Suas cartas mais vistas" : "Cartas que você mais enfrentou");
+  $("#cards-table-title").textContent = t(side === "me" ? "Desempenho das suas cartas" : "Cartas dos oponentes");
+  $("#cards-hint").textContent = t(side === "me"
     ? "taxa de vitória nos jogos em que a carta foi comprada ou jogada"
-    : "sua taxa de vitória nos jogos em que o oponente mostrou a carta";
+    : "sua taxa de vitória nos jogos em que o oponente mostrou a carta");
 
   const top = [...rows].sort((a, b) => b.games - a.games).slice(0, 12);
   sizeFor("w-cards", top.length, 26);
   draw("c-cards", {
     type: "bar",
-    data: { labels: top.map(r => trunc(r.name, 24)), datasets: [{ label: "Jogos", data: top.map(r => r.games),
+    data: { labels: top.map(r => trunc(r.name, 24)), datasets: [{ label: t("Jogos"), data: top.map(r => r.games),
       backgroundColor: cssVar("--accent"), borderRadius: 4, borderSkipped: "start", maxBarThickness: 16 }] },
     options: { indexAxis: "y", layout: { padding: { right: 80 } },
       scales: { x: { ticks: { precision: 0 }, grid: { color: cssVar("--grid") }, border: { display: false } }, y: { ...noGrid, ticks: { color: cssVar("--text-2") } } },
-      plugins: { valueLabels: { datasetIndex: 0, format: i => `${top[i].games} · ${pct(top[i].wr)} V` },
-        tooltip: { callbacks: { label: it => { const r = top[it.dataIndex]; return ` Vista em ${r.games} jogos — sua taxa de vitória: ${pct(r.wr)}`; } } } } },
-  }, top.length ? null : "Nenhuma carta registrada no filtro atual");
+      plugins: { valueLabels: { datasetIndex: 0, format: i => t("{g} · {p} V", { g: top[i].games, p: pct(top[i].wr) }) },
+        tooltip: { callbacks: { label: it => { const r = top[it.dataIndex]; return " " + t("Vista em {g} jogos — sua taxa de vitória: {p}", { g: r.games, p: pct(r.wr) }); } } } } },
+  }, top.length ? null : t("Nenhuma carta registrada no filtro atual"));
 
   const curve = Array(8).fill(0);
   for (const r of forCurve) if (!r.land && r.cmc != null) curve[Math.min(7, r.cmc)]++;
   draw("c-curve", {
     type: "bar",
-    data: { labels: ["0", "1", "2", "3", "4", "5", "6", "7+"], datasets: [{ label: "Cartas", data: curve,
+    data: { labels: ["0", "1", "2", "3", "4", "5", "6", "7+"], datasets: [{ label: t("Cartas"), data: curve,
       backgroundColor: cssVar("--accent"), borderRadius: 4, borderSkipped: "start", maxBarThickness: 40 }] },
     options: { layout: { padding: { top: 20 } },
-      scales: { y: { ticks: { precision: 0 }, grid: { color: cssVar("--grid") }, border: { display: false } }, x: { ...noGrid, title: { display: true, text: "Valor de mana", color: cssVar("--muted") } } },
+      scales: { y: { ticks: { precision: 0 }, grid: { color: cssVar("--grid") }, border: { display: false } }, x: { ...noGrid, title: { display: true, text: t("Valor de mana"), color: cssVar("--muted") } } },
       plugins: { valueLabels: { datasetIndex: 0, format: i => curve[i] ? String(curve[i]) : "" },
-        tooltip: { callbacks: { title: it => `Custo ${it[0].label}`, label: it => ` ${it.parsed.y} cartas distintas` } } } },
-  }, forCurve.length ? null : "Sem cartas");
+        tooltip: { callbacks: { title: it => t("Custo {c}", { c: it[0].label }), label: it => " " + t("{n} cartas distintas", { n: it.parsed.y }) } } } },
+  }, forCurve.length ? null : t("Sem cartas"));
 
   const cols = [
     { key: "name", label: "Carta", cls: "name", html: r => cardName(r.id) },
     { key: "colors", label: "Cores", html: r => r.land ? "" : pips(r.colors) },
-    { key: "rarity", label: "Raridade", html: r => r.rarity ? `<span class="rar ${r.rarity}"></span>${RARITY_PT[r.rarity] || ""}` : "" },
+    { key: "rarity", label: "Raridade", html: r => r.rarity ? `<span class="rar ${r.rarity}"></span>${rarityName(r.rarity)}` : "" },
     { key: "type", label: "Tipo" },
     { key: "cmc", label: "Custo", num: true, html: r => r.land ? "—" : esc(r.cost) },
   ];
@@ -831,17 +836,17 @@ function renderOpponents() {
 
   const mono = "WUBRG".split("").map(c => {
     const v = ms.filter(m => m.oppColors.includes(c));
-    return { label: COLOR_NAMES[c], share: ms.length ? v.length / ms.length : 0, s: wl(v) };
+    return { label: t(COLOR_NAMES[c]), share: ms.length ? v.length / ms.length : 0, s: wl(v) };
   });
   draw("c-oppmono", {
     type: "bar",
-    data: { labels: mono.map(r => r.label), datasets: [{ label: "Presença", data: mono.map(r => r.share),
+    data: { labels: mono.map(r => r.label), datasets: [{ label: t("Presença"), data: mono.map(r => r.share),
       backgroundColor: cssVar("--accent"), borderRadius: 4, borderSkipped: "start", maxBarThickness: 56 }] },
     options: { layout: { padding: { top: 22 } },
       scales: { y: axisWR, x: { ...noGrid, ticks: { color: cssVar("--text-2") } } },
       plugins: { valueLabels: { datasetIndex: 0, format: i => pct(mono[i].share) },
-        tooltip: { callbacks: { label: it => { const r = mono[it.dataIndex]; return [` Em ${pct(r.share)} das partidas (${r.s.n})`, ` Sua taxa de vitória: ${pct(r.s.wr)}`]; } } } } },
-  }, ms.length ? null : "Sem cartas de oponentes registradas");
+        tooltip: { callbacks: { label: it => { const r = mono[it.dataIndex]; return [" " + t("Em {p} das partidas ({n})", { p: pct(r.share), n: r.s.n }), " " + t("Sua taxa de vitória: {p}", { p: pct(r.s.wr) })]; } } } } },
+  }, ms.length ? null : t("Sem cartas de oponentes registradas"));
 
   table("#t-oppcol", [
     { key: "label", label: "Combinação", html: r => `${pips(r.key)} ${esc(r.label)}` },
@@ -859,7 +864,7 @@ function renderOpponents() {
     { key: "wr", label: "% Vitória", num: true, html: r => wrCell(r.wr) },
     { key: "last", label: "Último confronto", num: true, html: r => fmtDate(r.last) },
   ], names, { sortKey: "n" });
-  if (!names.length) $("#t-oppnames").innerHTML = `<div class="empty" style="height:80px">Nenhum oponente enfrentado mais de uma vez</div>`;
+  if (!names.length) $("#t-oppnames").innerHTML = `<div class="empty" style="height:80px">${t("Nenhum oponente enfrentado mais de uma vez")}</div>`;
 }
 
 /* ----------------------------------------------------------------- partidas */
@@ -886,16 +891,16 @@ function toggleMatch(m, tr) {
   const cols = tr.children.length;
   const list = ids => [...ids].map(id => card(id)).filter(c => c && !c.token)
     .sort((a, b) => (a.is_land - b.is_land) || (a.cmc - b.cmc) || a.name.localeCompare(b.name))
-    .map(c => `<span>${cardName(c.id)}</span>`).join("") || "<span class='muted'>nenhuma</span>";
+    .map(c => `<span>${cardName(c.id)}</span>`).join("") || `<span class='muted'>${t("nenhuma")}</span>`;
   const my = new Set(), opp = new Set();
   const oppCmd = new Set();
   m.games.forEach(g => { g.my_seen.forEach(x => my.add(x)); g.opp_seen.forEach(x => opp.add(x)); (g.opp_commander || []).forEach(x => oppCmd.add(x)); });
-  const games = m.games.map(g => `<span><b>Jogo ${g.n}:</b> ${({ win: "vitória", loss: "derrota", draw: "empate" })[g.result] || "?"} · ${g.on_play == null ? "" : g.on_play ? "play · " : "draw · "}${g.turns} turnos${g.my_mulligans ? ` · ${g.my_mulligans} mulligan(s)` : ""}</span>`).join("");
+  const games = m.games.map(g => `<span><b>${t("Jogo {n}:", { n: g.n })}</b> ${t(({ win: "vitória", loss: "derrota", draw: "empate" })[g.result] || "?")} · ${g.on_play == null ? "" : g.on_play ? "play · " : "draw · "}${t("{n} turnos", { n: g.turns })}${g.my_mulligans ? ` · ${t("{n} mulligan(s)", { n: g.my_mulligans })}` : ""}</span>`).join("");
   tr.insertAdjacentHTML("afterend", `<tr class="detail"><td colspan="${cols}">
-    <div class="games">${games}<span class="muted">evento: ${esc(m.event)}</span></div>
+    <div class="games">${games}<span class="muted">${t("evento: {e}", { e: esc(m.event) })}</span></div>
     <div class="match-detail">
-      <div><h4>Suas cartas</h4><div class="chips">${list(my)}</div></div>
-      <div><h4>Cartas do oponente${oppCmd.size ? `: ${[...oppCmd].map(cardName).join(", ")}` : ""}</h4><div class="chips">${list(opp)}</div></div>
+      <div><h4>${t("Suas cartas")}</h4><div class="chips">${list(my)}</div></div>
+      <div><h4>${t("Cartas do oponente")}${oppCmd.size ? `: ${[...oppCmd].map(cardName).join(", ")}` : ""}</h4><div class="chips">${list(opp)}</div></div>
     </div></td></tr>`);
 }
 
@@ -906,12 +911,12 @@ const LIMITED_TYPES = [
 ];
 /* "QuickDraft_FRA_20261008" -> { type: "Quick Draft", set: "FRA" } */
 function limitedInfo(event) {
-  const t = LIMITED_TYPES.find(([re]) => re.test(event || ""));
-  if (!t) return null;
+  const lt = LIMITED_TYPES.find(([re]) => re.test(event || ""));
+  if (!lt) return null;
   const parts = event.split("_");
   const after = parts.slice(parts.findIndex(p => /Draft|Sealed/i.test(p)) + 1);
   const set = after.find(p => /^[A-Z][A-Z0-9]{1,4}$/.test(p)) || after[0] || "?";
-  return { type: t[1], set };
+  return { type: t(lt[1]), set };
 }
 
 const MAX_WINS = 7;   // vitórias que completam um draft
@@ -931,10 +936,10 @@ function renderLimited() {
   const best = runs.reduce((a, r) => (!a || r.w > a.w || (r.w === a.w && r.l < a.l)) ? r : a, null);
   const kpi = (label, value, sub = "") => `<div class="kpi"><div class="label">${label}</div><div class="value">${value}</div><div class="sub">${sub}</div></div>`;
   $("#limited-kpis").innerHTML = [
-    kpi("Drafts", num(runs.length), `${num(s.n)} partidas · <span class="star" title="drafts com ${MAX_WINS} vitórias">★</span> ${runs.filter(r => r.w >= MAX_WINS).length}`),
-    kpi("Vitórias–Derrotas", `${s.w}–${s.l}`, `taxa de vitória ${pct(s.wr)}`),
-    kpi("Média de vitórias", runs.length ? (s.w / runs.length).toFixed(1) : "—", "por draft"),
-    kpi("Melhor campanha", best ? best.record : "—", best ? `${best.set} · ${comboName(best.colors)}` : "&nbsp;"),
+    kpi(t("Drafts"), num(runs.length), `${tn(s.n, "{n} partida", "{n} partidas", { n: num(s.n) })} · <span class="star" title="${t("drafts com {n} vitórias", { n: MAX_WINS })}">★</span> ${runs.filter(r => r.w >= MAX_WINS).length}`),
+    kpi(t("Vitórias–Derrotas"), `${s.w}–${s.l}`, `${t("taxa de vitória")} ${pct(s.wr)}`),
+    kpi(t("Média de vitórias"), runs.length ? (s.w / runs.length).toFixed(1) : "—", t("por draft")),
+    kpi(t("Melhor campanha"), best ? best.record : "—", best ? `${best.set} · ${comboName(best.colors)}` : "&nbsp;"),
   ].join("");
 
   table("#t-limited", [
@@ -943,12 +948,12 @@ function renderLimited() {
     { key: "type", label: "Tipo", html: r => `${esc(r.type)} <span class="muted">${r.bo}</span>` },
     { key: "colors", label: "Cores do deck", html: r => `${pips(r.colors)} ${esc(comboName(r.colors))}` },
     { key: "star", label: "Estrela", cls: "center", sort: r => r.w >= MAX_WINS ? 1 : 0,
-      html: r => r.w >= MAX_WINS ? `<span class="star" title="Draft completo: ${MAX_WINS} vitórias">★</span>` : "" },
+      html: r => r.w >= MAX_WINS ? `<span class="star" title="${t("Draft completo: {n} vitórias", { n: MAX_WINS })}">★</span>` : "" },
     { key: "w", label: "Vitórias–Derrotas", num: true, html: r => `<b>${r.record}</b>` },
     { key: "gw", label: "Jogos", num: true, html: r => `${r.gw}–${r.gl}` },
     { key: "wr", label: "% Vitória", num: true, html: r => wrCell(r.wr) },
   ], runs, { sortKey: "ts", onRow: toggleRun });
-  if (!runs.length) $("#t-limited").innerHTML = `<div class="empty" style="height:120px">Nenhuma partida de draft ou selado no filtro atual.<br>Jogue um evento limitado no Arena e clique em Atualizar dados.</div>`;
+  if (!runs.length) $("#t-limited").innerHTML = `<div class="empty" style="height:120px">${t("Nenhuma partida de draft ou selado no filtro atual.<br>Jogue um evento limitado no Arena e clique em Atualizar dados.")}</div>`;
 }
 
 function toggleRun(run, tr) {
@@ -971,21 +976,22 @@ function toggleRun(run, tr) {
 /* --------------------------------------------------- posso craftar esse deck? */
 const WC_RARITIES = ["common", "uncommon", "rare", "mythic"];
 const WC_PLURAL = { common: "comuns", uncommon: "incomuns", rare: "raras", mythic: "míticas" };
+const WC_TITLE = { common: "Comuns", uncommon: "Incomuns", rare: "Raras", mythic: "Míticas" };
 const SECTION_PT = { commander: "comandante", companion: "companheiro", side: "sideboard" };
 
 function ago(ts) {
   const min = Math.round((Date.now() / 1000 - ts) / 60);
-  if (min < 1) return "agora";
-  if (min < 60) return `há ${min} min`;
-  if (min < 60 * 24) return `há ${Math.round(min / 60)} h`;
-  return `em ${fmtDateTime(new Date(ts * 1000))}`;
+  if (min < 1) return t("agora");
+  if (min < 60) return t("há {n} min", { n: min });
+  if (min < 60 * 24) return t("há {n} h", { n: Math.round(min / 60) });
+  return t("em {d}", { d: fmtDateTime(new Date(ts * 1000)) });
 }
 function showCollection(info, error) {
   const el = $("#craft-col-info");
   const parts = [];
-  if (info?.ts) parts.push(`Coleção: <b>${num(info.count)}</b> cartas (${num(info.copies)} cópias), lida do Arena ${ago(info.ts)}.`);
-  else parts.push("A coleção ainda não foi lida. Abra o MTG Arena e clique em Reler coleção.");
-  if (error) parts.push(`<span class="bad">${esc(error)}${info?.ts ? " Usando a última leitura." : ""}</span>`);
+  if (info?.ts) parts.push(t("Coleção: <b>{n}</b> cartas ({c} cópias), lida do Arena {ago}.", { n: num(info.count), c: num(info.copies), ago: ago(info.ts) }));
+  else parts.push(t("A coleção ainda não foi lida. Abra o MTG Arena e clique em Reler coleção."));
+  if (error) parts.push(`<span class="bad">${esc(t(error))}${info?.ts ? t(" Usando a última leitura.") : ""}</span>`);
   el.innerHTML = parts.join("<br>");
   if (info?.wildcards) state.craftWc = info.wildcards;
   if (!state.craft) $("#craft-wc").innerHTML = WC_RARITIES.map(r => wcTile(r, null)).join("");
@@ -1003,13 +1009,13 @@ function renderCraft() {
 function wcTile(r, s) {
   const have = s ? s.have : state.craftWc?.[r];
   let status = "&nbsp;";
-  if (s && s.missing) status = s.ok ? `<span class="wc-s ok">✓ dá para craftar · sobram ${num(s.have - s.missing)}</span>`
-    : `<span class="wc-s no">faltam ${num(s.missing - s.have)} wildcards</span>`;
-  else if (s) status = `<span class="wc-s ok">✓ nenhuma faltando</span>`;
+  if (s && s.missing) status = s.ok ? `<span class="wc-s ok">${t("✓ dá para craftar · sobram {n}", { n: num(s.have - s.missing) })}</span>`
+    : `<span class="wc-s no">${t("faltam {n} wildcards", { n: num(s.missing - s.have) })}</span>`;
+  else if (s) status = `<span class="wc-s ok">${t("✓ nenhuma faltando")}</span>`;
   return `<div class="wc">
-    <div class="wc-h"><span class="rar ${r}"></span>${RARITY_PT[r]}s</div>
-    <div class="wc-n">${s ? num(s.missing) : "—"}<small>${s ? (s.missing === 1 ? "carta falta" : "cartas faltam") : ""}</small></div>
-    <div class="wc-s">você tem <b>${have == null ? "—" : num(have)}</b> wildcards</div>
+    <div class="wc-h"><span class="rar ${r}"></span>${t(WC_TITLE[r])}</div>
+    <div class="wc-n">${s ? num(s.missing) : "—"}<small>${s ? t(s.missing === 1 ? "carta falta" : "cartas faltam") : ""}</small></div>
+    <div class="wc-s">${t("você tem <b>{n}</b> wildcards", { n: have == null ? "—" : num(have) })}</div>
     <div class="wc-s">${status}</div>
   </div>`;
 }
@@ -1021,28 +1027,28 @@ function renderCraftResult(res) {
   v.hidden = false;
   if (!rows.length) {
     v.className = "craft-verdict no";
-    v.innerHTML = `<b>Nenhuma carta reconhecida.</b><span class="muted">Confira se a lista está no formato “4 Nome da carta”.</span>`;
+    v.innerHTML = `<b>${t("Nenhuma carta reconhecida.")}</b><span class="muted">${t("Confira se a lista está no formato “4 Nome da carta”.")}</span>`;
   } else if (res.complete) {
     v.className = "craft-verdict done";
-    v.innerHTML = `<b>Você já tem todas as cartas deste deck.</b><span class="muted">${num(res.total)} cartas na lista.</span>`;
+    v.innerHTML = `<b>${t("Você já tem todas as cartas deste deck.")}</b><span class="muted">${t("{n} cartas na lista.", { n: num(res.total) })}</span>`;
   } else if (res.can_craft) {
     v.className = "craft-verdict";
-    v.innerHTML = `<b>Dá para craftar!</b><span class="muted">Faltam ${num(missTotal)} cartas e você tem wildcards suficientes.</span>`;
+    v.innerHTML = `<b>${t("Dá para craftar!")}</b><span class="muted">${t("Faltam {n} cartas e você tem wildcards suficientes.", { n: num(missTotal) })}</span>`;
   } else {
-    const short = WC_RARITIES.filter(r => !s[r].ok).map(r => `${num(s[r].missing - s[r].have)} ${WC_PLURAL[r]}`);
+    const short = WC_RARITIES.filter(r => !s[r].ok).map(r => `${num(s[r].missing - s[r].have)} ${t(WC_PLURAL[r])}`);
     v.className = "craft-verdict no";
-    v.innerHTML = `<b>Ainda não dá para craftar.</b><span class="muted">Faltam wildcards: ${short.join(", ")}.</span>`;
+    v.innerHTML = `<b>${t("Ainda não dá para craftar.")}</b><span class="muted">${t("Faltam wildcards: {l}.", { l: short.join(", ") })}</span>`;
   }
   $("#craft-wc").innerHTML = WC_RARITIES.map(r => wcTile(r, s[r])).join("");
 
-  const unknown = res.unknown.length ? ` · <span style="color:var(--bad-text)">não encontradas: ${res.unknown.map(esc).join(", ")}</span>` : "";
-  $("#craft-hint").innerHTML = `${num(res.total)} cartas · ${num(missTotal)} faltando${unknown}`;
+  const unknown = res.unknown.length ? ` · <span style="color:var(--bad-text)">${t("não encontradas: {l}", { l: res.unknown.map(esc).join(", ") })}</span>` : "";
+  $("#craft-hint").innerHTML = t("{n} cartas · {m} faltando", { n: num(res.total), m: num(missTotal) }) + unknown;
   const only = $("#craft-only-missing").checked;
   const rarOrder = r => ["mythic", "rare", "uncommon", "common", "basic"].indexOf(r);
   const list = rows.filter(r => !only || r.missing).map(r => ({ ...r, name: card(r.id)?.name || r.name_en }));
   table("#t-craft", [
-    { key: "name", label: "Carta", html: r => `${cardName(r.id)}${r.sections.filter(x => SECTION_PT[x]).map(x => ` <span class="muted small">${SECTION_PT[x]}</span>`).join("")}` },
-    { key: "rarity", label: "Raridade", sort: r => -rarOrder(r.rarity), html: r => `<span class="rar ${r.rarity}"></span>${RARITY_PT[r.rarity] || "—"}` },
+    { key: "name", label: "Carta", html: r => `${cardName(r.id)}${r.sections.filter(x => SECTION_PT[x]).map(x => ` <span class="muted small">${t(SECTION_PT[x])}</span>`).join("")}` },
+    { key: "rarity", label: "Raridade", sort: r => -rarOrder(r.rarity), html: r => `<span class="rar ${r.rarity}"></span>${rarityName(r.rarity) || "—"}` },
     { key: "qty", label: "No deck", num: true },
     { key: "owned", label: "Na coleção", num: true, sort: r => r.rarity === "basic" ? 1e9 : r.owned,
       html: r => r.rarity === "basic" ? "∞" : num(r.owned) },
@@ -1053,7 +1059,7 @@ function renderCraftResult(res) {
     const td = tr.lastElementChild;
     td.classList.add(td.textContent === "✓" ? "have-ok" : "miss");
   });
-  if (!list.length) $("#t-craft").innerHTML = `<div class="empty" style="height:120px">${rows.length ? "Nenhuma carta faltando." : "Nenhuma carta reconhecida."}</div>`;
+  if (!list.length) $("#t-craft").innerHTML = `<div class="empty" style="height:120px">${t(rows.length ? "Nenhuma carta faltando." : "Nenhuma carta reconhecida.")}</div>`;
 }
 
 async function checkDeck() {
@@ -1061,7 +1067,7 @@ async function checkDeck() {
   try { localStorage.setItem("craftText", text); } catch (e) { /* sem storage */ }
   if (!text.trim()) return;
   const btn = $("#craft-check");
-  btn.disabled = true; btn.textContent = "Verificando…";
+  btn.disabled = true; btn.textContent = t("Verificando…");
   try {
     const res = await state.api.check_deck(text);
     showCollection(res.collection, res.collection?.ok === false ? res.collection.error : null);
@@ -1069,25 +1075,26 @@ async function checkDeck() {
       state.craft = null;
       $("#craft-verdict").hidden = false;
       $("#craft-verdict").className = "craft-verdict no";
-      $("#craft-verdict").innerHTML = `<b>Não foi possível verificar.</b><span class="muted">${esc(res.error)}</span>`;
+      $("#craft-verdict").innerHTML = `<b>${t("Não foi possível verificar.")}</b><span class="muted">${esc(t(res.error))}</span>`;
     } else {
+      Object.values(res.cards).forEach(localizeCard);
       Object.assign(state.data.cards, res.cards);   // nomes e imagens para a lista e a pré-visualização
       state.craft = res;
       renderCraftResult(res);
     }
-  } catch (e) { status(`Erro ao verificar: ${e.message || e}`, true); console.error(e); }
-  btn.disabled = false; btn.textContent = "Verificar";
+  } catch (e) { status(t("Erro ao verificar: {e}", { e: e.message || e }), true); console.error(e); }
+  btn.disabled = false; btn.textContent = t("Verificar");
 }
 
 async function rereadCollection() {
   const btn = $("#craft-reread");
-  btn.disabled = true; btn.textContent = "Lendo…";
+  btn.disabled = true; btn.textContent = t("Lendo…");
   try {
     const res = await state.api.read_collection();
     showCollection(res, res.ok ? null : res.error);
     if (res.ok && $("#craft-text").value.trim() && state.craft) await checkDeck();
   } catch (e) { showCollection(null, String(e.message || e)); }
-  btn.disabled = false; btn.textContent = "Reler coleção do Arena";
+  btn.disabled = false; btn.textContent = t("Reler coleção do Arena");
 }
 
 function setupCraft() {
@@ -1098,7 +1105,7 @@ function setupCraft() {
     try { localStorage.removeItem("craftText"); } catch (e) { /* sem storage */ }
     $("#craft-verdict").hidden = true; $("#craft-hint").textContent = "";
     $("#craft-wc").innerHTML = WC_RARITIES.map(r => wcTile(r, null)).join("");
-    $("#t-craft").innerHTML = `<div class="empty" style="height:140px">Cole uma lista à esquerda e clique em Verificar.</div>`;
+    $("#t-craft").innerHTML = `<div class="empty" style="height:140px">${t("Cole uma lista à esquerda e clique em Verificar.")}</div>`;
     $("#craft-text").focus();
   };
   $("#craft-text").addEventListener("keydown", ev => { if (ev.key === "Enter" && ev.ctrlKey) checkDeck(); });
@@ -1126,51 +1133,52 @@ function go(page) {
 /* -------------------------------------------------------------- dados / api */
 function setData(data) {
   state.data = data;
+  Object.values(data.cards).forEach(localizeCard);
   state.all = data.matches.map(enrich);
   buildFilterOptions();
   applyFilters();
-  $("#player").textContent = data.player?.name || "Jogador";
+  $("#player").textContent = data.player?.name || t("Jogador");
   const r = data.rank;
-  const rk = (cls, lvl, step) => cls ? `${RANKS[cls] || cls}${cls === "Mythic" ? "" : " " + (lvl ?? "")}` : "—";
-  $("#rank").innerHTML = r ? `<span>Construído: <b>${rk(r.constructedClass, r.constructedLevel)}</b></span><span>Limitado: <b>${rk(r.limitedClass, r.limitedLevel)}</b></span>` : "";
+  const rk = (cls, lvl, step) => cls ? `${RANKS[cls] ? t(RANKS[cls]) : cls}${cls === "Mythic" ? "" : " " + (lvl ?? "")}` : "—";
+  $("#rank").innerHTML = r ? `<span>${t("Construído")}: <b>${rk(r.constructedClass, r.constructedLevel)}</b></span><span>${t("Limitado")}: <b>${rk(r.limitedClass, r.limitedLevel)}</b></span>` : "";
   const banner = $("#banner");
   if (!state.all.length) {
     banner.hidden = false;
-    banner.innerHTML = `<b>Nenhuma partida encontrada ainda.</b> No MTG Arena, abra <b>Opções → Conta</b> e marque
-      <b>Registros detalhados (suporte a plug-ins)</b>; reinicie o jogo e jogue algumas partidas. Depois clique em <b>Atualizar dados</b>.
-      O histórico é guardado pelo MTGA Stats, então as partidas continuam aqui mesmo depois que o Arena apaga o log.`;
+    banner.innerHTML = t("<b>Nenhuma partida encontrada ainda.</b> No MTG Arena, abra <b>Opções → Conta</b> e marque " +
+      "<b>Registros detalhados (suporte a plug-ins)</b>; reinicie o jogo e jogue algumas partidas. Depois clique em <b>Atualizar dados</b>. " +
+      "O histórico é guardado pelo MTGA Stats, então as partidas continuam aqui mesmo depois que o Arena apaga o log.");
   } else banner.hidden = true;
 }
 const RANKS = { Bronze: "Bronze", Silver: "Prata", Gold: "Ouro", Platinum: "Platina", Diamond: "Diamante", Mythic: "Mítico" };
 
 async function refresh(manual = true) {
   const btn = $("#btn-refresh");
-  btn.disabled = true; btn.textContent = "Lendo log…";
+  btn.disabled = true; btn.textContent = t("Lendo log…");
   status("");
   let res;
   try {
     res = await state.api.refresh();
     setData(await state.api.get_data());
-  } catch (e) { status(`Erro ao ler log: ${e.message || e}`, true); console.error(e); }
+  } catch (e) { status(t("Erro ao ler log: {e}", { e: e.message || e }), true); console.error(e); }
   if (res) {
-    try { render(); } catch (e) { status(`Erro ao exibir: ${e.message || e}`, true); console.error(e); }
-    if (!res.ok) status(res.error, true);
+    try { render(); } catch (e) { status(t("Erro ao exibir: {e}", { e: e.message || e }), true); console.error(e); }
+    if (!res.ok) status(t(res.error), true);
     else if (!$("#status").style.color) {
-      status(res.new ? `${res.new} nova(s) partida(s)` : "Atualizado");
+      status(res.new ? tn(res.new, "{n} nova partida", "{n} novas partidas") : t("Atualizado"));
       if (!res.detailed_logs && manual) warnDetailed();
     }
   }
-  btn.disabled = false; btn.textContent = "Atualizar dados";
+  btn.disabled = false; btn.textContent = t("Atualizar dados");
 }
 function warnDetailed() {
   const b = $("#banner");
   b.hidden = false;
-  b.innerHTML = `<b>Registros detalhados parecem desativados.</b> Sem eles o Arena não grava as partidas no log.
-    Ative em <b>Opções → Conta → Registros detalhados (suporte a plug-ins)</b> e reinicie o jogo.`;
+  b.innerHTML = t("<b>Registros detalhados parecem desativados.</b> Sem eles o Arena não grava as partidas no log. " +
+    "Ative em <b>Opções → Conta → Registros detalhados (suporte a plug-ins)</b> e reinicie o jogo.");
 }
-function status(t, err) {
+function status(msg, err) {
   const el = $("#status");
-  el.textContent = t;
+  el.textContent = msg;
   el.style.color = err ? "var(--bad-text)" : "";
 }
 
@@ -1181,7 +1189,7 @@ async function poll() {
     if (res.changed && res.new) {
       setData(await state.api.get_data());
       render();
-      status(`${res.new} nova(s) partida(s)`);
+      status(tn(res.new, "{n} nova partida", "{n} novas partidas"));
     }
   } catch (e) { /* ignora */ }
 }
@@ -1253,8 +1261,18 @@ function setupTheme() {
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
 }
 
+/* -------------------------------------------------------------------- idioma */
+function setupLang() {
+  applyI18n();
+  $$("#lang button").forEach(b => {
+    b.classList.toggle("active", b.dataset.lang === LANG);
+    b.onclick = () => setLang(b.dataset.lang);
+  });
+}
+
 /* --------------------------------------------------------------------- init */
 async function init() {
+  setupLang();
   setupTheme();
   setupCardPreview();
   setupCraft();
@@ -1275,17 +1293,17 @@ async function init() {
     const res = await state.api.import_file();
     if (res.cancelled) return;
     setData(await state.api.get_data()); render();
-    status(res.ok ? `${res.new} nova(s) partida(s) importada(s)` : res.error, !res.ok);
+    status(res.ok ? tn(res.new, "{n} nova partida importada", "{n} novas partidas importadas") : t(res.error), !res.ok);
   };
   state.api = (await getApi()) || devApi;
   if (state.api === devApi) {
     setData(await devApi.get_data());
     render();
-    status("modo navegador");
+    status(t("modo navegador"));
     return;
   }
   try { setData(await state.api.get_data()); render(); }
-  catch (e) { status(`Erro ao exibir: ${e.message || e}`, true); console.error(e); }
+  catch (e) { status(t("Erro ao exibir: {e}", { e: e.message || e }), true); console.error(e); }
   await refresh(false);
   setInterval(poll, 15000);
 }

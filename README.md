@@ -115,6 +115,7 @@ Outras dicas:
 - **Passe o mouse sobre o nome de uma carta** para ver a imagem dela (vem do Scryfall e precisa de internet).
 - **Clique no cabeçalho de uma coluna** para ordenar a tabela.
 - O botão **◐**, no canto inferior esquerdo, alterna entre tema claro e escuro.
+- Os botões **PT-BR** e **EN-US**, ao lado dele, trocam o idioma da interface (português ou inglês). Em inglês, os nomes e tipos das cartas também aparecem no original. A escolha fica salva.
 - **Importar log…** carrega logs antigos que você tenha guardado (`Player.log` de outra data ou de outro PC).
 
 ### Lista do deck
@@ -184,7 +185,7 @@ mtgastats/store.py   banco SQLite com o histórico e importação incremental
 mtgastats/carddb.py  leitura do banco de cartas do Arena (nomes em português)
 mtgastats/collection.py leitura da coleção e das wildcards na memória do Arena (Windows)
 mtgastats/craft.py   interpreta a lista de deck colada e compara com a coleção
-web/                 interface: index.html, style.css, app.js
+web/                 interface: index.html, style.css, app.js, i18n.js (traduções para o inglês)
 web/lib/             Chart.js 4.4.1 (gráficos, embutido para funcionar offline)
 run.bat              abre o app (cria o ambiente na primeira vez)
 build_exe.bat        gera dist\MTGA Stats.exe com PyInstaller
