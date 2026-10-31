@@ -856,15 +856,16 @@ function renderOpponents() {
     { key: "turns", label: "Turnos/jogo", num: true, html: r => r.turns ? r.turns.toFixed(1) : "—" },
   ], combos, { sortKey: "n" });
 
-  const names = [...groupBy(state.filtered, m => m.opponent || "?")].filter(([, v]) => v.length > 1)
+  const names = [...groupBy(state.filtered, m => m.opponent || "?")]
     .map(([k, v]) => ({ name: k, n: v.length, ...wl(v), last: v.reduce((a, b) => a.date > b.date ? a : b).date }));
+  $("#oppnames-hint").textContent = names.length ? tn(names.length, "{n} oponente", "{n} oponentes") : "";
   table("#t-oppnames", [
-    { key: "name", label: "Oponente" }, { key: "n", label: "Partidas", num: true },
-    { key: "w", label: "V", num: true }, { key: "l", label: "D", num: true },
+    { key: "name", label: "Oponente", cls: "name" }, { key: "n", label: "Partidas", num: true },
+    { key: "w", label: "V", num: true }, { key: "l", label: "D", num: true }, { key: "d", label: "E", num: true },
     { key: "wr", label: "% Vitória", num: true, html: r => wrCell(r.wr) },
     { key: "last", label: "Último confronto", num: true, html: r => fmtDate(r.last) },
-  ], names, { sortKey: "n" });
-  if (!names.length) $("#t-oppnames").innerHTML = `<div class="empty" style="height:80px">${t("Nenhum oponente enfrentado mais de uma vez")}</div>`;
+  ], names, { sortKey: "last" });
+  if (!names.length) $("#t-oppnames").innerHTML = `<div class="empty" style="height:80px">${t("Nenhum oponente no filtro atual")}</div>`;
 }
 
 /* ----------------------------------------------------------------- partidas */

@@ -78,7 +78,7 @@ const EN = {
   "Sem partidas": "No matches", "Nada para mostrar no filtro atual": "Nothing to show in the current filter",
   "São necessárias ao menos 2 partidas": "At least 2 matches are needed",
   "Acumulada": "Cumulative", "Média móvel (10)": "Moving average (10)", "Semana de {d}": "Week of {d}",
-  "V": "W", "D": "L", "% Vitória": "Win %", "Jogos V–D": "Games W–L", "Turnos/jogo": "Turns/game",
+  "V": "W", "D": "L", "E": "D","% Vitória": "Win %", "Jogos V–D": "Games W–L", "Turnos/jogo": "Turns/game",
   "Deck mais usado": "Most played deck", "Tipo": "Type", "Outros": "Others", "{n} partidas ({p})": "{n} matches ({p})",
   "Data": "Date", "Resultado": "Result", "Jogos": "Games", "Início": "Start", "Turnos": "Turns", "Cores": "Colors",
 
@@ -124,10 +124,10 @@ const EN = {
   // oponentes
   "Sua taxa de vitória contra cada combinação de cores": "Your win rate against each color combination",
   "Cores mais enfrentadas": "Most faced colors", "presença de cada cor nos decks adversários": "share of opponent decks with each color",
-  "Por combinação de cores": "By color combination", "Oponentes repetidos": "Repeat opponents", "Presença": "Presence",
+  "Por combinação de cores": "By color combination", "Oponentes enfrentados": "Opponents faced", "{n} oponente": "{n} opponent", "{n} oponentes": "{n} opponents", "Presença": "Presence",
   "Em {p} das partidas ({n})": "In {p} of matches ({n})", "Sua taxa de vitória: {p}": "Your win rate: {p}",
   "Sem cartas de oponentes registradas": "No opponent cards recorded", "Combinação": "Combination", "Oponente": "Opponent",
-  "Último confronto": "Last faced", "Nenhum oponente enfrentado mais de uma vez": "No opponent faced more than once",
+  "Último confronto": "Last faced", "Nenhum oponente no filtro atual": "No opponents in the current filter",
 
   // partidas
   "Histórico de partidas": "Match history", "clique em uma partida para ver as cartas": "click a match to see the cards",

@@ -121,7 +121,7 @@ A barra no topo filtra **todas** as telas ao mesmo tempo:
 | **Formatos** | Quanto você joga cada formato, vitórias e derrotas por formato, resumo por formato e por evento |
 | **Decks** | Tabela com todos os seus decks. **Clique num deck** para ver a evolução, o desempenho contra cada combinação de cores, o **histórico de mudanças** (cartas que entraram e saíram entre as partidas, com o V–D de cada versão) e a **lista do deck** com as imagens das cartas por valor de mana |
 | **Cartas** | Alterne entre **Minhas cartas** e **Cartas dos oponentes**: em quantos jogos apareceram, sua taxa de vitória e a curva de mana. Use a busca e o mínimo de jogos para filtrar |
-| **Oponentes** | Sua taxa de vitória contra cada combinação de cores (Azorius, Golgari…), cores mais enfrentadas e oponentes repetidos |
+| **Oponentes** | Sua taxa de vitória contra cada combinação de cores (Azorius, Golgari…), cores mais enfrentadas e todos os oponentes enfrentados (vitórias, derrotas, empates, taxa e último confronto) |
 | **Partidas** | Histórico completo. **Clique numa partida** para ver o resultado de cada jogo e as cartas vistas dos dois lados |
 | **Limitado** | Seus drafts e selados: data, coleção (sigla, ex.: FRA), tipo (Quick, Premier, tradicional), cores do deck e placar de vitórias–derrotas. **Clique num draft** para ver as partidas dele |
 | **Posso craftar esse deck?** | Cole uma lista de deck e veja quais cartas você já tem, quantas faltam por raridade e se suas wildcards bastam para craftar o deck (detalhes abaixo) |
