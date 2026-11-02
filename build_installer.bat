@@ -14,7 +14,7 @@ if not exist "%ISCC%" (
   pause & exit /b 1
 )
 set VER=%~1
-if "%VER%"=="" set VER=1.0.0
+if "%VER%"=="" set VER=1.1.0
 "%ISCC%" /Q /DAppVersion=%VER% installer\MTGAStats.iss || (pause & exit /b 1)
 echo.
 echo Pronto: dist\installer\MTGA-Stats-Setup-%VER%.exe

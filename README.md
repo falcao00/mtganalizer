@@ -66,7 +66,7 @@ Double-click **`build_exe.bat`**. When it finishes you get **`dist\MTGA Stats.ex
 that runs without Python. Copy it anywhere or create a desktop shortcut.
 
 To also build the installer, install Inno Setup 6 (`winget install JRSoftware.InnoSetup`) and run
-**`build_installer.bat 1.0.0`** (the number is the version). The output goes to `dist\installer\`; the
+**`build_installer.bat 1.1.0`** (the number is the version). The output goes to `dist\installer\`; the
 installer script is `installer\MTGAStats.iss`.
 
 ### Option C: from VS Code

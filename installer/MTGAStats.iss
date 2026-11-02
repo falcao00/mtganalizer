@@ -3,7 +3,7 @@
 ; Resultado: dist\installer\MTGA-Stats-Setup-<versão>.exe
 
 #ifndef AppVersion
-  #define AppVersion "1.0.0"
+  #define AppVersion "1.1.0"
 #endif
 
 [Setup]
