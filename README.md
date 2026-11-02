@@ -1,59 +1,58 @@
 # MTGA Stats
 
-Aplicação desktop para analisar suas partidas do **MTG Arena**: vitórias e derrotas em gráficos,
-desempenho por formato, decks mais usados, análise das cartas (suas e dos oponentes) e taxa de vitória
-em Play × Draw.
+A desktop app for analyzing your **MTG Arena** matches: wins and losses in charts, performance by
+format, most-played decks, card analysis (yours and your opponents') and win rate on the Play × Draw.
 
-Tudo roda localmente: o app lê o log que o próprio Arena grava no seu computador e guarda o histórico
-num banco SQLite. Nenhum dado da sua conta é enviado para fora.
+Everything runs locally: the app reads the log that Arena itself writes on your computer and keeps the
+history in a SQLite database. No account data is sent anywhere.
 
 ---
 
-## 1. Requisitos
+## 1. Requirements
 
-- **Windows 10 ou 11** (a janela usa o WebView2, que já vem no Windows).
-- **MTG Arena** instalado (Steam, Epic ou instalador da Wizards).
-- **Python 3.10 ou superior**, só para rodar a partir do código ou gerar o executável.
-  Baixe em <https://www.python.org/downloads/> e marque *"Add Python to PATH"* na instalação.
+- **Windows 10 or 11** (the window uses WebView2, which ships with Windows).
+- **MTG Arena** installed (Steam, Epic or the Wizards installer).
+- **Python 3.10 or later**, only to run from source or build the executable.
+  Download it from <https://www.python.org/downloads/> and check *"Add Python to PATH"* during setup.
 
-## 2. Ative os registros detalhados no Arena (obrigatório)
+## 2. Turn on detailed logs in Arena (required)
 
-Sem isso o Arena não grava as partidas no log e o app fica vazio.
+Without this, Arena doesn't write matches to the log and the app stays empty.
 
-1. Abra o MTG Arena.
-2. Vá em **Opções (engrenagem) → Conta**.
-3. Marque **"Registros detalhados (suporte a plug-ins)"**, em inglês *Detailed Logs (Plugin Support)*.
-4. **Feche e abra o jogo de novo.**
+1. Open MTG Arena.
+2. Go to **Options (gear) → Account**.
+3. Check **Detailed Logs (Plugin Support)**.
+4. **Close the game and open it again.**
 
-Só as partidas jogadas **depois** de ativar a opção aparecem.
+Only matches played **after** turning the option on show up.
 
-## 3. Instalação
+## 3. Installation
 
-### Pelo instalador (recomendado)
+### With the installer (recommended)
 
-Baixe o **`MTGA-Stats-Setup-<versão>.exe`** da [última versão](https://github.com/falcao00/mtganalizer/releases/latest)
-e execute. Não precisa de Python nem de permissão de administrador: o app vai para
-`%LOCALAPPDATA%\Programs\MTGA Stats` e ganha atalho no menu Iniciar. Para remover, use
-**Configurações → Aplicativos**; o histórico em `%APPDATA%\MTGAStats` é mantido.
+Download **`MTGA-Stats-Setup-<version>.exe`** from the [latest release](https://github.com/falcao00/mtganalizer/releases/latest)
+and run it. No Python or administrator rights needed: the app goes to
+`%LOCALAPPDATA%\Programs\MTGA Stats` and gets a Start menu shortcut. To remove it, use
+**Settings → Apps**; your history in `%APPDATA%\MTGAStats` is kept.
 
-> O instalador não tem assinatura digital. Se o Windows mostrar "O Windows protegeu o computador",
-> clique em **Mais informações → Executar assim mesmo**.
+> The installer isn't digitally signed. If Windows shows "Windows protected your PC",
+> click **More info → Run anyway**.
 
-### A partir do código
+### From source
 
 ```bash
 git clone https://github.com/falcao00/mtganalizer.git
 cd mtganalizer
 ```
 
-Depois escolha uma das opções.
+Then pick one of the options below.
 
-### Opção A: rodar direto (mais simples)
+### Option A: run directly (simplest)
 
-Dê dois cliques em **`run.bat`**. Na primeira vez ele cria um ambiente Python (`.venv`) e instala as
-dependências; nas próximas abre direto.
+Double-click **`run.bat`**. The first time, it creates a Python environment (`.venv`) and installs the
+dependencies; after that it opens right away.
 
-Pelo terminal, o equivalente é:
+From a terminal, the equivalent is:
 
 ```bash
 python -m venv .venv
@@ -61,150 +60,157 @@ python -m venv .venv
 .venv\Scripts\python app.py
 ```
 
-### Opção B: gerar um executável
+### Option B: build an executable
 
-Dê dois cliques em **`build_exe.bat`**. Ao final aparece **`dist\MTGA Stats.exe`**, um arquivo único
-que roda sem Python. Pode copiá-lo para qualquer lugar ou criar um atalho na área de trabalho.
+Double-click **`build_exe.bat`**. When it finishes you get **`dist\MTGA Stats.exe`**, a single file
+that runs without Python. Copy it anywhere or create a desktop shortcut.
 
-Para gerar também o instalador, instale o Inno Setup 6 (`winget install JRSoftware.InnoSetup`) e rode
-**`build_installer.bat 1.0.0`** (o número é a versão). O resultado sai em `dist\installer\`; o script do
-instalador está em `installer\MTGAStats.iss`.
+To also build the installer, install Inno Setup 6 (`winget install JRSoftware.InnoSetup`) and run
+**`build_installer.bat 1.0.0`** (the number is the version). The output goes to `dist\installer\`; the
+installer script is `installer\MTGAStats.iss`.
 
-### Opção C: pelo VS Code
+### Option C: from VS Code
 
-Abra a pasta do projeto no VS Code:
+Open the project folder in VS Code:
 
-- **Ctrl+Shift+B** gera o executável (`dist\MTGA Stats.exe`). Na primeira vez também cria o `.venv`
-  e instala as dependências.
-- **F5** abre o app com o depurador (precisa da extensão **Python** da Microsoft). Escolha
-  "MTGA Stats (com DevTools)" para inspecionar a interface.
-- Em **Terminal → Executar Tarefa…** também há a tarefa **Rodar app**.
+- **Ctrl+Shift+B** builds the executable (`dist\MTGA Stats.exe`). The first time it also creates the
+  `.venv` and installs the dependencies.
+- **F5** opens the app under the debugger (requires Microsoft's **Python** extension). Choose
+  "MTGA Stats (com DevTools)" to inspect the interface.
+- **Terminal → Run Task…** also has a **Rodar app** task.
 
-> **Importante:** mantenha a pasta do projeto num local comum, como Documentos ou Downloads.
-> Pastas internas de aplicativos empacotados (por exemplo, dentro de `AppData\Local\Packages`)
-> impedem a janela de carregar o WebView2.
+> **Important:** keep the project folder in an ordinary location, such as Documents or Downloads.
+> Internal folders of packaged apps (for example, inside `AppData\Local\Packages`) prevent the window
+> from loading WebView2.
 
-## 4. Como usar
+## 4. Usage
 
-1. Jogue normalmente no Arena.
-2. Abra o MTGA Stats. Ele lê o log automaticamente ao abrir.
-3. Se deixar o app aberto enquanto joga, ele confere o log a cada 15 segundos e adiciona as partidas
-   novas sozinho. Também dá para clicar em **Atualizar dados** a qualquer momento.
+1. Play Arena as usual.
+2. Open MTGA Stats. It reads the log automatically on startup.
+3. If you leave the app open while you play, it checks the log every 15 seconds and adds new matches
+   on its own. You can also click **Refresh data** at any time.
 
-### Não perca partidas
+The interface opens in Portuguese. Use the **EN-US** button in the bottom-left corner to switch to
+English; the choice is saved.
 
-**O Arena apaga o log a cada vez que o jogo é aberto** e só mantém a sessão atual e a anterior
-(`Player.log` e `Player-prev.log`). O MTGA Stats copia as partidas para o próprio banco, então:
+### Don't lose matches
 
-- abra o app pelo menos uma vez a cada duas sessões de jogo, ou
-- deixe o app aberto enquanto joga.
+**Arena wipes the log every time the game starts** and keeps only the current and previous sessions
+(`Player.log` and `Player-prev.log`). MTGA Stats copies matches into its own database, so:
 
-Partidas já importadas ficam guardadas para sempre, mesmo depois que o Arena apaga o log.
+- open the app at least once every two play sessions, or
+- leave the app open while you play.
 
-### Filtros
+Matches that have been imported are kept forever, even after Arena deletes the log.
 
-A barra no topo filtra **todas** as telas ao mesmo tempo:
+### Filters
 
-| Filtro | O que faz |
+The bar at the top filters **every** screen at once:
+
+| Filter | What it does |
 |---|---|
-| Formato | Padrão, Histórico, Brawl Histórico, Alquimia, Draft, Selado… |
-| Fila | Ranqueada, Casual, Limitado, Evento, Desafio direto |
-| Melhor de | Bo1 ou Bo3 |
-| Período | Hoje, últimos 7/30/90 dias ou todo o histórico |
-| Deck | Um deck específico |
+| Format | Standard, Historic, Historic Brawl, Alchemy, Draft, Sealed… |
+| Queue | Ranked, Play, Limited, Event, Direct challenge |
+| Best of | Bo1 or Bo3 |
+| Period | Today, last 7/30/90 days or all time |
+| Deck | A specific deck |
 
-### Telas
+### Screens
 
-| Tela | O que mostra |
+| Screen | What it shows |
 |---|---|
-| **Visão geral** | Partidas, taxa de vitória, jogos (games), sequência atual, resultados por dia, evolução da taxa de vitória, Play × Draw, taxa por formato e decks mais usados (sem decks de draft/selado) |
-| **Formatos** | Quanto você joga cada formato, vitórias e derrotas por formato, resumo por formato e por evento |
-| **Decks** | Tabela com todos os seus decks. **Clique num deck** para ver a evolução, o desempenho contra cada combinação de cores, o **histórico de mudanças** (cartas que entraram e saíram entre as partidas, com o V–D de cada versão) e a **lista do deck** com as imagens das cartas por valor de mana |
-| **Cartas** | Alterne entre **Minhas cartas** e **Cartas dos oponentes**: em quantos jogos apareceram, sua taxa de vitória e a curva de mana. Use a busca e o mínimo de jogos para filtrar |
-| **Oponentes** | Sua taxa de vitória contra cada combinação de cores (Azorius, Golgari…), cores mais enfrentadas e todos os oponentes enfrentados (vitórias, derrotas, empates, taxa e último confronto) |
-| **Partidas** | Histórico completo. **Clique numa partida** para ver o resultado de cada jogo e as cartas vistas dos dois lados |
-| **Limitado** | Seus drafts e selados: data, coleção (sigla, ex.: FRA), tipo (Quick, Premier, tradicional), cores do deck e placar de vitórias–derrotas. **Clique num draft** para ver as partidas dele |
-| **Posso craftar esse deck?** | Cole uma lista de deck e veja quais cartas você já tem, quantas faltam por raridade e se suas wildcards bastam para craftar o deck (detalhes abaixo) |
+| **Overview** | Matches, win rate, games, current streak, results per day, win rate over time, Play × Draw, win rate by format and most-played decks (excluding draft/sealed decks) |
+| **Formats** | How much you play each format, wins and losses by format, summary by format and by event |
+| **Decks** | Table of all your decks. **Click a deck** to see its trend, its performance against each color combination, the **change history** (cards added and removed between matches, with the W–L of each version) and the **decklist** with card images by mana value |
+| **Cards** | Toggle between **My cards** and **Opponents' cards**: how many games they appeared in, your win rate and the mana curve. Use the search box and the minimum games to filter |
+| **Opponents** | Your win rate against each color combination (Azorius, Golgari…), most-faced colors and every opponent you've faced (wins, losses, draws, win rate and last match) |
+| **Matches** | Full history. **Click a match** to see each game's result and the cards seen on both sides |
+| **Limited** | Your drafts and sealed events: date, set (code, e.g. FRA), type (Quick, Premier, Traditional), deck colors and W–L record. **Click a draft** to see its matches |
+| **Can I craft this deck?** | Paste a decklist and see which cards you already own, how many are missing by rarity and whether your wildcards are enough to craft it (details below) |
 
-Outras dicas:
+Other tips:
 
-- **Passe o mouse sobre o nome de uma carta** para ver a imagem dela (vem do Scryfall e precisa de internet).
-- **Clique no cabeçalho de uma coluna** para ordenar a tabela.
-- O botão **◐**, no canto inferior esquerdo, alterna entre tema claro e escuro.
-- Os botões **PT-BR** e **EN-US**, ao lado dele, trocam o idioma da interface (português ou inglês). Em inglês, os nomes e tipos das cartas também aparecem no original. A escolha fica salva.
-- **Importar log…** carrega logs antigos que você tenha guardado (`Player.log` de outra data ou de outro PC).
+- **Hover over a card name** to see its image (from Scryfall; needs internet).
+- **Click a column header** to sort the table.
+- The **◐** button in the bottom-left corner toggles light and dark themes.
+- The **PT-BR** and **EN-US** buttons next to it switch the interface language (Portuguese or English).
+  In English, card names and types are shown in the original too. The choice is saved.
+- **Import log…** loads old logs you've kept (a `Player.log` from another date or another PC).
 
-### Lista do deck
+### Decklist
 
-Na tela de um deck, a **Lista do deck** mostra as imagens das cartas da versão atual, em colunas por
-valor de mana, do menor para o maior: o comandante (em Brawl) vem primeiro e os terrenos no fim.
-Cópias repetidas aparecem empilhadas com a quantidade (ex.: x4). As imagens vêm do Scryfall e precisam
-de internet. O endereço de cada imagem é consultado só uma vez por carta e fica guardado no
-banco local; depois disso o deck abre na hora, mesmo após fechar e abrir o app.
+On a deck's screen, the **Decklist** shows images of the cards in the current version, in columns by
+mana value from lowest to highest: the commander (in Brawl) comes first and lands come last. Duplicate
+copies are stacked with the count (e.g. x4). Images come from Scryfall and need internet. Each image's
+address is looked up only once per card and stored in the local database; after that the deck opens
+instantly, even after restarting the app.
 
-### Posso craftar esse deck?
+### Can I craft this deck?
 
-1. Deixe o **MTG Arena aberto** (na tela inicial, já logado).
-2. Exporte ou copie uma lista de deck (no Arena: **Decks → Exportar**; também funciona com listas de sites
-   como MTGGoldfish, Moxfield e 17lands) e cole na caixa **Lista do deck**.
-3. Clique em **Verificar** (ou `Ctrl+Enter`).
+1. Leave **MTG Arena open** (on the home screen, logged in).
+2. Export or copy a decklist (in Arena: **Decks → Export**; lists from sites such as MTGGoldfish,
+   Moxfield and 17lands also work) and paste it into the **Decklist** box.
+3. Click **Check** (or `Ctrl+Enter`).
 
-O app mostra:
+The app shows:
 
-- um resumo dizendo se **dá para craftar**, se você **já tem tudo** ou quantas wildcards faltam;
-- a **legenda por raridade** (comuns, incomuns, raras e míticas): quantas cartas faltam e quantas
-  wildcards você tem de cada tipo;
-- a **lista de cartas**, com quantas o deck pede, quantas você tem e quantas faltam. Marque
-  **só as que faltam** para ver apenas o que precisa craftar.
+- a summary saying whether you **can craft it**, whether you **already own everything** or how many
+  wildcards you're short;
+- the **breakdown by rarity** (commons, uncommons, rares and mythics): how many cards are missing and
+  how many wildcards you have of each kind;
+- the **card list**, with how many the deck needs, how many you own and how many are missing. Check
+  **missing only** to see just what you need to craft.
 
-Como funciona:
+How it works:
 
-- O log do Arena não informa mais quais cartas você possui. Por isso o app lê a coleção **direto da
-  memória do Arena aberto** (somente leitura, como faz o Untapped.gg). A última leitura fica guardada,
-  então com o Arena fechado o app usa a coleção da última vez e avisa a data.
-- As wildcards vêm do Arena aberto ou, com ele fechado, do log.
-- Cópias de qualquer edição contam: se você tem a carta numa coleção e a lista pede outra edição, ela
-  não aparece como faltando. Terrenos básicos e cartas que você já tem 4 cópias nunca faltam.
-- Quando a lista não indica a edição, a raridade usada é a da edição mais barata de craftar.
-- Se o Arena receber uma atualização grande, a leitura da coleção pode parar de funcionar até o
-  MTGA Stats ser ajustado. O resto do app continua normal.
+- Arena's log no longer reports which cards you own. So the app reads the collection **directly from
+  the memory of the running Arena client** (read-only, like Untapped.gg does). The last read is saved,
+  so with Arena closed the app uses the collection from last time and shows its date.
+- Wildcards come from the running Arena client or, when it's closed, from the log.
+- Copies from any printing count: if you own a card from one set and the list asks for another
+  printing, it isn't shown as missing. Basic lands and cards you own 4 copies of are never missing.
+- When the list doesn't name the printing, the rarity used is that of the cheapest printing to craft.
+- If Arena gets a major update, reading the collection may stop working until MTGA Stats is updated.
+  The rest of the app keeps working.
 
-## 5. Onde ficam os dados
+## 5. Where data lives
 
-| O quê | Caminho |
+| What | Path |
 |---|---|
-| Log do Arena (lido pelo app) | `%USERPROFILE%\AppData\LocalLow\Wizards Of The Coast\MTGA\Player.log` |
-| Histórico do MTGA Stats | `%APPDATA%\MTGAStats\stats.db` |
-| Nomes e dados das cartas | banco local do Arena: `MTGA_Data\Downloads\Raw\Raw_CardDatabase_*.mtga` |
+| Arena log (read by the app) | `%USERPROFILE%\AppData\LocalLow\Wizards Of The Coast\MTGA\Player.log` |
+| MTGA Stats history | `%APPDATA%\MTGAStats\stats.db` |
+| Card names and data | Arena's local database: `MTGA_Data\Downloads\Raw\Raw_CardDatabase_*.mtga` |
 
-Para fazer backup do seu histórico, copie o arquivo `stats.db`. Para começar do zero, apague-o.
+To back up your history, copy `stats.db`. To start over, delete it.
 
-## 6. Problemas comuns
+## 6. Troubleshooting
 
-| Sintoma | Solução |
+| Symptom | Fix |
 |---|---|
-| "Nenhuma partida encontrada" | Ative os registros detalhados (seção 2), reinicie o Arena e jogue uma partida |
-| Aviso "Registros detalhados parecem desativados" | Mesma coisa: ative a opção e reinicie o jogo |
-| Cartas aparecem como `#12345` | O banco de cartas do Arena não foi encontrado. Abra o Arena uma vez para ele baixar os dados e clique em **Atualizar dados** |
-| A janela não abre / erro de WebView2 | Mova a pasta do projeto para Documentos ou Downloads (veja a seção 3) |
-| Faltam partidas antigas | O Arena já tinha apagado o log antes da importação (veja "Não perca partidas") |
-| "O MTG Arena não está aberto" em Posso craftar | Abra o Arena, entre na tela inicial e clique em **Reler coleção do Arena** |
-| "Sem permissão para ler o MTG Arena" | O Arena foi aberto como administrador: abra o MTGA Stats como administrador também |
-| Carta listada em "não encontradas" | O nome não existe no Arena (ou está escrito diferente). Confira a grafia, em inglês ou português |
+| "No matches found yet" | Turn on detailed logs (section 2), restart Arena and play a match |
+| "Detailed logs seem to be off" warning | Same thing: turn the option on and restart the game |
+| Cards show up as `#12345` | Arena's card database wasn't found. Open Arena once so it downloads the data, then click **Refresh data** |
+| The window doesn't open / WebView2 error | Move the project folder to Documents or Downloads (see section 3) |
+| Old matches are missing | Arena had already wiped the log before they were imported (see "Don't lose matches") |
+| "MTG Arena isn't open" in Can I craft | Open Arena, go to the home screen and click **Reread Arena collection** |
+| "No permission to read MTG Arena" | Arena was started as administrator: run MTGA Stats as administrator too |
+| Card listed as "not found" | The name doesn't exist in Arena (or is spelled differently). Check the spelling, in English or Portuguese |
 
-## 7. Estrutura do código
+## 7. Code layout
 
 ```
-app.py               janela desktop (pywebview) e API chamada pela interface
-mtgastats/parser.py  leitura do Player.log: partidas, jogos, decks, cartas vistas, rank
-mtgastats/store.py   banco SQLite com o histórico e importação incremental
-mtgastats/carddb.py  leitura do banco de cartas do Arena (nomes em português)
-mtgastats/collection.py leitura da coleção e das wildcards na memória do Arena (Windows)
-mtgastats/craft.py   interpreta a lista de deck colada e compara com a coleção
-web/                 interface: index.html, style.css, app.js, i18n.js (traduções para o inglês)
-web/lib/             Chart.js 4.4.1 (gráficos, embutido para funcionar offline)
-run.bat              abre o app (cria o ambiente na primeira vez)
-build_exe.bat        gera dist\MTGA Stats.exe com PyInstaller
+app.py                  desktop window (pywebview) and the API called by the interface
+mtgastats/parser.py     Player.log parsing: matches, games, decks, cards seen, rank
+mtgastats/store.py      SQLite database with the history and incremental import
+mtgastats/carddb.py     reads Arena's card database (Portuguese names)
+mtgastats/collection.py reads the collection and wildcards from Arena's memory (Windows)
+mtgastats/craft.py      parses the pasted decklist and compares it with the collection
+web/                    interface: index.html, style.css, app.js, i18n.js (English translations)
+web/lib/                Chart.js 4.4.1 (charts, bundled to work offline)
+run.bat                 opens the app (creates the environment the first time)
+build_exe.bat           builds dist\MTGA Stats.exe with PyInstaller
+build_installer.bat     builds the Windows installer with Inno Setup
+installer/              Inno Setup script (MTGAStats.iss)
 ```
 
-Para desenvolver com as ferramentas do navegador, rode `python app.py --debug`.
+For development with the browser dev tools, run `python app.py --debug`.

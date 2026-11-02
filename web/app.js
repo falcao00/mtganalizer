@@ -938,7 +938,7 @@ function renderLimited() {
   const kpi = (label, value, sub = "") => `<div class="kpi"><div class="label">${label}</div><div class="value">${value}</div><div class="sub">${sub}</div></div>`;
   $("#limited-kpis").innerHTML = [
     kpi(t("Drafts"), num(runs.length), `${tn(s.n, "{n} partida", "{n} partidas", { n: num(s.n) })} · <span class="star" title="${t("drafts com {n} vitórias", { n: MAX_WINS })}">★</span> ${runs.filter(r => r.w >= MAX_WINS).length}`),
-    kpi(t("Vitórias–Derrotas"), `${s.w}–${s.l}`, `${t("taxa de vitória")} ${pct(s.wr)}`),
+    kpi(t("V–D"), `${s.w}–${s.l}`, `${t("taxa de vitória")} ${pct(s.wr)}`),
     kpi(t("Média de vitórias"), runs.length ? (s.w / runs.length).toFixed(1) : "—", t("por draft")),
     kpi(t("Melhor campanha"), best ? best.record : "—", best ? `${best.set} · ${comboName(best.colors)}` : "&nbsp;"),
   ].join("");
@@ -950,7 +950,7 @@ function renderLimited() {
     { key: "colors", label: "Cores do deck", html: r => `${pips(r.colors)} ${esc(comboName(r.colors))}` },
     { key: "star", label: "Estrela", cls: "center", sort: r => r.w >= MAX_WINS ? 1 : 0,
       html: r => r.w >= MAX_WINS ? `<span class="star" title="${t("Draft completo: {n} vitórias", { n: MAX_WINS })}">★</span>` : "" },
-    { key: "w", label: "Vitórias–Derrotas", num: true, html: r => `<b>${r.record}</b>` },
+    { key: "w", label: "V–D", num: true, html: r => `<b>${r.record}</b>` },
     { key: "gw", label: "Jogos", num: true, html: r => `${r.gw}–${r.gl}` },
     { key: "wr", label: "% Vitória", num: true, html: r => wrCell(r.wr) },
   ], runs, { sortKey: "ts", onRow: toggleRun });

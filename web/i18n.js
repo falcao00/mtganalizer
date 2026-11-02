@@ -138,7 +138,7 @@ const EN = {
 
   // limitado
   "Drafts realizados": "Drafts played", "clique em um draft para ver as partidas": "click a draft to see its matches",
-  "Drafts": "Drafts", "drafts com {n} vitórias": "drafts with {n} wins", "Vitórias–Derrotas": "Wins–Losses",
+  "Drafts": "Drafts", "drafts com {n} vitórias": "drafts with {n} wins", "V–D": "W–L",
   "Média de vitórias": "Average wins", "por draft": "per draft", "Melhor campanha": "Best run", "Coleção": "Set",
   "Cores do deck": "Deck colors", "Estrela": "Star", "Draft completo: {n} vitórias": "Complete draft: {n} wins",
   "Nenhuma partida de draft ou selado no filtro atual.<br>Jogue um evento limitado no Arena e clique em Atualizar dados.":
