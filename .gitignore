@@ -13,3 +13,8 @@ web/dev-data.json
 *.db
 .claude/
 web/dev-craft.json
+
+# certificado de assinatura (nunca commitar)
+sign.local.bat
+*.pfx
+*.p12

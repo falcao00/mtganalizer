@@ -14,8 +14,19 @@ if not exist "%ISCC%" (
   pause & exit /b 1
 )
 set VER=%~1
-if "%VER%"=="" set VER=1.1.0
-"%ISCC%" /Q /DAppVersion=%VER% installer\MTGAStats.iss || (pause & exit /b 1)
+if "%VER%"=="" set VER=1.2.0
+rem com certificado configurado (ver sign.bat), o Inno Setup assina o instalador e o desinstalador
+if exist sign.local.bat call sign.local.bat
+set SIGNARGS=
+if defined SIGN_CERT_SHA1 set SIGNARGS=1
+if defined SIGN_AZURE_METADATA set SIGNARGS=1
+if defined SIGN_PFX set SIGNARGS=1
+if defined SIGNARGS (
+  "%ISCC%" /Q /DAppVersion=%VER% /DSIGN "/Smtgasign=cmd /c call $q%~dp0sign.bat$q $f" installer\MTGAStats.iss || (pause & exit /b 1)
+) else (
+  echo Sem certificado configurado: o instalador nao sera assinado.
+  "%ISCC%" /Q /DAppVersion=%VER% installer\MTGAStats.iss || (pause & exit /b 1)
+)
 echo.
 echo Pronto: dist\installer\MTGA-Stats-Setup-%VER%.exe
 pause

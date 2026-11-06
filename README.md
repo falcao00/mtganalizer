@@ -35,8 +35,8 @@ and run it. No Python or administrator rights needed: the app goes to
 `%LOCALAPPDATA%\Programs\MTGA Stats` and gets a Start menu shortcut. To remove it, use
 **Settings → Apps**; your history in `%APPDATA%\MTGAStats` is kept.
 
-> The installer isn't digitally signed. If Windows shows "Windows protected your PC",
-> click **More info → Run anyway**.
+> If the installer you downloaded isn't digitally signed, Windows may show "Windows protected your PC".
+> Click **More info → Run anyway**. See [Code signing](#code-signing) for how releases get signed.
 
 ### From source
 
@@ -66,8 +66,33 @@ Double-click **`build_exe.bat`**. When it finishes you get **`dist\MTGA Stats.ex
 that runs without Python. Copy it anywhere or create a desktop shortcut.
 
 To also build the installer, install Inno Setup 6 (`winget install JRSoftware.InnoSetup`) and run
-**`build_installer.bat 1.1.0`** (the number is the version). The output goes to `dist\installer\`; the
+**`build_installer.bat 1.2.0`** (the number is the version). The output goes to `dist\installer\`; the
 installer script is `installer\MTGAStats.iss`.
+
+#### Code signing
+
+`build_exe.bat` and `build_installer.bat` sign the exe, the installer and the uninstaller with
+**`sign.bat`** (Windows SDK `signtool`, SHA-256 with a timestamp) when a certificate is configured.
+Without one they still build, unsigned. Put the settings in a **`sign.local.bat`** next to it (it's
+ignored by git, so the certificate details never reach the repository), using one of:
+
+```bat
+rem certificate in the Windows store or on the CA's USB token
+set SIGN_CERT_SHA1=0123456789ABCDEF0123456789ABCDEF01234567
+
+rem Azure Artifact Signing (formerly Trusted Signing)
+set SIGN_AZURE_DLIB=C:\tools\ArtifactSigning\bin\x64\Azure.CodeSigning.Dlib.dll
+set SIGN_AZURE_METADATA=C:\tools\ArtifactSigning\metadata.json
+
+rem .pfx file
+set SIGN_PFX=C:\certs\mtgastats.pfx
+set SIGN_PFX_PASSWORD=...
+```
+
+Windows only trusts a signature from a certificate issued by a public certification authority (or
+Azure Artifact Signing) in the publisher's verified name; a self-signed certificate doesn't remove
+the warning. SmartScreen may still warn on the first downloads of a new certificate until it builds
+reputation. `signtool` comes with the Windows SDK (`winget install Microsoft.WindowsSDK.10.0.26100`).
 
 ### Option C: from VS Code
 
@@ -209,6 +234,7 @@ web/lib/                Chart.js 4.4.1 (charts, bundled to work offline)
 run.bat                 opens the app (creates the environment the first time)
 build_exe.bat           builds dist\MTGA Stats.exe with PyInstaller
 build_installer.bat     builds the Windows installer with Inno Setup
+sign.bat                signs the exe and the installer (certificate set in sign.local.bat)
 installer/              Inno Setup script (MTGAStats.iss)
 ```
 

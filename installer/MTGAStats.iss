@@ -3,7 +3,7 @@
 ; Resultado: dist\installer\MTGA-Stats-Setup-<versão>.exe
 
 #ifndef AppVersion
-  #define AppVersion "1.1.0"
+  #define AppVersion "1.2.0"
 #endif
 
 [Setup]
@@ -29,6 +29,11 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 ; fecha o MTGA Stats aberto antes de atualizar
 CloseApplications=yes
+#ifdef SIGN
+; assinatura digital: build_installer.bat define o comando "mtgasign" (sign.bat)
+SignTool=mtgasign
+SignedUninstaller=yes
+#endif
 
 [Languages]
 Name: "ptbr"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
