@@ -228,9 +228,7 @@ td.name { max-width: 300px; overflow: hidden; text-overflow: ellipsis; }
 .rar { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: middle; }
 .rar.common { background: #6b6b6b; } .rar.uncommon { background: #a4b5c4; } .rar.rare { background: #d6b25e; } .rar.mythic { background: #e2672b; } .rar.basic, .rar.token { background: var(--axis); }
 
-/* ---------- toolbar / segmented ---------- */
-.toolbar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-.toolbar label { display: inline-flex; align-items: center; gap: 6px; }
+/* ---------- segmented ---------- */
 .seg { display: inline-flex; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 2px; }
 .seg button { border: 0; background: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; color: var(--text-2); }
 .seg button.active { background: var(--surface-2); color: var(--text); font-weight: 600; }

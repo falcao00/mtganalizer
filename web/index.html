@@ -18,7 +18,6 @@
       <button data-page="overview" class="active" data-i18n>Visão geral</button>
       <button data-page="formats" data-i18n>Formatos</button>
       <button data-page="decks" data-i18n>Decks</button>
-      <button data-page="cards" data-i18n>Cartas</button>
       <button data-page="opponents" data-i18n>Oponentes</button>
       <button data-page="matches" data-i18n>Partidas</button>
       <button data-page="limited" data-i18n>Limitado</button>
@@ -89,23 +88,6 @@
         <div class="card"><div class="card-h"><h3 data-i18n>Seus decks</h3><span class="muted small" data-i18n>clique em um deck para ver os detalhes</span></div><div class="table-wrap" id="t-decks"></div></div>
       </div>
       <div id="deck-detail" hidden></div>
-    </section>
-
-    <section class="page" id="page-cards" hidden>
-      <div class="toolbar">
-        <div class="seg" id="cards-side">
-          <button data-side="me" class="active" data-i18n>Minhas cartas</button>
-          <button data-side="opp" data-i18n>Cartas dos oponentes</button>
-        </div>
-        <input id="cards-search" type="search" placeholder="Buscar carta…" data-i18n-placeholder>
-        <label class="muted small"><span data-i18n>Mín. de jogos</span> <select id="cards-min"><option>1</option><option selected>2</option><option>3</option><option>5</option><option>10</option></select></label>
-        <label class="muted small"><input type="checkbox" id="cards-lands"> <span data-i18n>incluir terrenos</span></label>
-      </div>
-      <div class="grid g-1-1">
-        <div class="card"><div class="card-h"><h3 id="cards-chart-title">Cartas mais vistas</h3></div><div class="chart" id="w-cards"><canvas id="c-cards"></canvas></div></div>
-        <div class="card"><div class="card-h"><h3 data-i18n>Curva de mana</h3><span class="muted small" data-i18n>cartas distintas vistas, sem terrenos</span></div><div class="chart h300"><canvas id="c-curve"></canvas></div></div>
-      </div>
-      <div class="card"><div class="card-h"><h3 id="cards-table-title">Desempenho por carta</h3><span class="muted small" id="cards-hint"></span></div><div class="table-wrap" id="t-cards"></div></div>
     </section>
 
     <section class="page" id="page-opponents" hidden>

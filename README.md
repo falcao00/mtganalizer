@@ -122,7 +122,6 @@ The bar at the top filters **every** screen at once:
 | **Overview** | Matches, win rate, games, current streak, results per day, win rate over time, Play × Draw, win rate by format and most-played decks (excluding draft/sealed decks) |
 | **Formats** | How much you play each format, wins and losses by format, summary by format and by event |
 | **Decks** | Table of all your decks. **Click a deck** to see its trend, its performance against each color combination, the **change history** (cards added and removed between matches, with the W–L of each version) and the **decklist** with card images by mana value |
-| **Cards** | Toggle between **My cards** and **Opponents' cards**: how many games they appeared in, your win rate and the mana curve. Use the search box and the minimum games to filter |
 | **Opponents** | Your win rate against each color combination (Azorius, Golgari…), most-faced colors and every opponent you've faced (wins, losses, draws, win rate and last match) |
 | **Matches** | Full history. **Click a match** to see each game's result and the cards seen on both sides |
 | **Limited** | Your drafts and sealed events: date, set (code, e.g. FRA), type (Quick, Premier, Traditional), deck colors and W–L record. **Click a draft** to see its matches |

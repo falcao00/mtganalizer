@@ -8,7 +8,7 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": 
 
 const state = {
   api: null, data: null, all: [], filtered: [], page: "overview",
-  charts: {}, deckSel: null, cardsSide: "me",
+  charts: {}, deckSel: null,
 };
 
 /* ------------------------------------------------------------------ domínio */
@@ -567,26 +567,6 @@ function renderDecks() {
   ], deckRows(state.filtered), { sortKey: "n", onRow: r => { state.deckSel = r.key; renderDecks(); $("main").scrollTop = 0; } });
 }
 
-function cardPerformance(ms, side) {
-  /* Para cada carta: jogos em que foi vista e taxa de vitória nesses jogos (e nos demais). */
-  const stats = new Map();
-  let totalGames = 0, totalWins = 0;
-  for (const m of ms) {
-    for (const g of m.games) {
-      if (g.result !== "win" && g.result !== "loss") continue;
-      totalGames++;
-      const won = g.result === "win";
-      if (won) totalWins++;
-      for (const id of (side === "opp" ? g.opp_seen : g.my_seen)) {
-        let s = stats.get(id);
-        if (!s) { s = { id, games: 0, wins: 0, matches: new Set() }; stats.set(id, s); }
-        s.games++; if (won) s.wins++; s.matches.add(m.id);
-      }
-    }
-  }
-  return { stats, totalGames, totalWins };
-}
-
 /* Versões de um deck: uma nova versão começa quando a lista jogada muda de uma partida para a outra. */
 function deckVersions(ms) {
   const counts = m => {
@@ -757,73 +737,6 @@ function renderDeckDetail(d) {
   wrBars("c-deck-opp", "w-deck-opp", opp);
 
   renderDeckVisual(d.key);
-}
-
-/* ------------------------------------------------------------------- cartas */
-function renderCards() {
-  const side = state.cardsSide;
-  const ms = state.filtered;
-  const q = $("#cards-search").value.trim().toLowerCase();
-  const minG = +$("#cards-min").value;
-  const lands = $("#cards-lands").checked;
-  const { stats } = cardPerformance(ms, side);
-  // em quantas partidas a carta estava no seu deck
-  const inDeck = new Map();
-  if (side === "me") for (const m of ms) for (const [id] of [...m.main, ...m.command]) inDeck.set(id, (inDeck.get(id) || 0) + 1);
-
-  let rows = [...stats.values()].map(s => {
-    const c = card(s.id) || {};
-    return { id: s.id, name: c.name || "#" + s.id, name_en: c.name_en || "", colors: sortColors(c.colors || ""), rarity: c.rarity || "",
-      type: c.types || "", cmc: c.cmc ?? null, cost: c.cost || "", land: !!c.is_land, token: !!c.token,
-      games: s.games, matches: s.matches.size, wr: s.games ? s.wins / s.games : null, deck: inDeck.get(s.id) || 0 };
-  }).filter(r => !r.token && (lands || !r.land));
-  const forCurve = rows;
-  rows = rows.filter(r => r.games >= minG && (!q || r.name.toLowerCase().includes(q) || r.name_en.toLowerCase().includes(q)));
-
-  $("#cards-chart-title").textContent = t(side === "me" ? "Suas cartas mais vistas" : "Cartas que você mais enfrentou");
-  $("#cards-table-title").textContent = t(side === "me" ? "Desempenho das suas cartas" : "Cartas dos oponentes");
-  $("#cards-hint").textContent = t(side === "me"
-    ? "taxa de vitória nos jogos em que a carta foi comprada ou jogada"
-    : "sua taxa de vitória nos jogos em que o oponente mostrou a carta");
-
-  const top = [...rows].sort((a, b) => b.games - a.games).slice(0, 12);
-  sizeFor("w-cards", top.length, 26);
-  draw("c-cards", {
-    type: "bar",
-    data: { labels: top.map(r => trunc(r.name, 24)), datasets: [{ label: t("Jogos"), data: top.map(r => r.games),
-      backgroundColor: cssVar("--accent"), borderRadius: 4, borderSkipped: "start", maxBarThickness: 16 }] },
-    options: { indexAxis: "y", layout: { padding: { right: 80 } },
-      scales: { x: { ticks: { precision: 0 }, grid: { color: cssVar("--grid") }, border: { display: false } }, y: { ...noGrid, ticks: { color: cssVar("--text-2") } } },
-      plugins: { valueLabels: { datasetIndex: 0, format: i => t("{g} · {p} V", { g: top[i].games, p: pct(top[i].wr) }) },
-        tooltip: { callbacks: { label: it => { const r = top[it.dataIndex]; return " " + t("Vista em {g} jogos — sua taxa de vitória: {p}", { g: r.games, p: pct(r.wr) }); } } } } },
-  }, top.length ? null : t("Nenhuma carta registrada no filtro atual"));
-
-  const curve = Array(8).fill(0);
-  for (const r of forCurve) if (!r.land && r.cmc != null) curve[Math.min(7, r.cmc)]++;
-  draw("c-curve", {
-    type: "bar",
-    data: { labels: ["0", "1", "2", "3", "4", "5", "6", "7+"], datasets: [{ label: t("Cartas"), data: curve,
-      backgroundColor: cssVar("--accent"), borderRadius: 4, borderSkipped: "start", maxBarThickness: 40 }] },
-    options: { layout: { padding: { top: 20 } },
-      scales: { y: { ticks: { precision: 0 }, grid: { color: cssVar("--grid") }, border: { display: false } }, x: { ...noGrid, title: { display: true, text: t("Valor de mana"), color: cssVar("--muted") } } },
-      plugins: { valueLabels: { datasetIndex: 0, format: i => curve[i] ? String(curve[i]) : "" },
-        tooltip: { callbacks: { title: it => t("Custo {c}", { c: it[0].label }), label: it => " " + t("{n} cartas distintas", { n: it.parsed.y }) } } } },
-  }, forCurve.length ? null : t("Sem cartas"));
-
-  const cols = [
-    { key: "name", label: "Carta", cls: "name", html: r => cardName(r.id) },
-    { key: "colors", label: "Cores", html: r => r.land ? "" : pips(r.colors) },
-    { key: "rarity", label: "Raridade", html: r => r.rarity ? `<span class="rar ${r.rarity}"></span>${rarityName(r.rarity)}` : "" },
-    { key: "type", label: "Tipo" },
-    { key: "cmc", label: "Custo", num: true, html: r => r.land ? "—" : esc(r.cost) },
-  ];
-  if (side === "me") cols.push({ key: "deck", label: "Partidas no deck", num: true });
-  cols.push(
-    { key: "matches", label: "Partidas vista", num: true },
-    { key: "games", label: "Jogos vista", num: true },
-    { key: "wr", label: side === "me" ? "% V quando vista" : "Sua % V contra", num: true, html: r => wrCell(r.wr) },
-  );
-  table("#t-cards", cols, rows, { sortKey: "games" });
 }
 
 /* ---------------------------------------------------------------- oponentes */
@@ -1115,7 +1028,7 @@ function setupCraft() {
 }
 
 /* --------------------------------------------------------------- navegação */
-const RENDER = { overview: renderOverview, formats: renderFormats, decks: renderDecks, cards: renderCards, opponents: renderOpponents, matches: renderMatches, limited: renderLimited, craft: renderCraft };
+const RENDER = { overview: renderOverview, formats: renderFormats, decks: renderDecks, opponents: renderOpponents, matches: renderMatches, limited: renderLimited, craft: renderCraft };
 
 function render() {
   if (!state.data) return;
@@ -1282,13 +1195,6 @@ async function init() {
     if (id === "f-format") buildFilterOptions();
     applyFilters(); render();
   }));
-  $$("#cards-side button").forEach(b => b.onclick = () => {
-    state.cardsSide = b.dataset.side;
-    $$("#cards-side button").forEach(x => x.classList.toggle("active", x === b));
-    $("#t-cards")._sort = null;
-    renderCards();
-  });
-  ["cards-search", "cards-min", "cards-lands"].forEach(id => $("#" + id).addEventListener("input", () => renderCards()));
   $("#btn-refresh").onclick = () => refresh(true);
   $("#btn-import").onclick = async () => {
     const res = await state.api.import_file();

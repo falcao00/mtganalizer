@@ -43,7 +43,7 @@ function localizeCard(c) {
 
 const EN = {
   // menu e barra lateral
-  "Visão geral": "Overview", "Formatos": "Formats", "Decks": "Decks", "Cartas": "Cards", "Oponentes": "Opponents",
+  "Visão geral": "Overview", "Formatos": "Formats", "Decks": "Decks", "Oponentes": "Opponents",
   "Partidas": "Matches", "Limitado": "Limited", "Posso craftar esse deck?": "Can I craft this deck?",
   "Atualizar dados": "Refresh data", "Importar log…": "Import log…", "Alternar tema": "Toggle theme", "Idioma": "Language",
   "Lendo log…": "Reading log…", "Atualizado": "Up to date", "modo navegador": "browser mode", "Jogador": "Player",
@@ -108,18 +108,7 @@ const EN = {
   "{n} cartas · versão {v} (atual) · por valor de mana, do menor para o maior": "{n} cards · version {v} (current) · by mana value, lowest to highest",
 
   // cartas
-  "Minhas cartas": "My cards", "Cartas dos oponentes": "Opponents' cards", "Buscar carta…": "Search card…",
-  "Mín. de jogos": "Min. games", "incluir terrenos": "include lands", "Cartas mais vistas": "Most seen cards",
-  "Curva de mana": "Mana curve", "cartas distintas vistas, sem terrenos": "distinct cards seen, excluding lands",
-  "Desempenho por carta": "Performance by card", "Suas cartas mais vistas": "Your most seen cards",
-  "Cartas que você mais enfrentou": "Cards you faced most", "Desempenho das suas cartas": "Your cards' performance",
-  "taxa de vitória nos jogos em que a carta foi comprada ou jogada": "win rate in games where the card was drawn or played",
-  "sua taxa de vitória nos jogos em que o oponente mostrou a carta": "your win rate in games where the opponent showed the card",
-  "{g} · {p} V": "{g} · {p} W", "Vista em {g} jogos — sua taxa de vitória: {p}": "Seen in {g} games — your win rate: {p}",
-  "Nenhuma carta registrada no filtro atual": "No cards recorded in the current filter",
-  "Valor de mana": "Mana value", "Custo {c}": "Cost {c}", "{n} cartas distintas": "{n} distinct cards", "Sem cartas": "No cards",
-  "Carta": "Card", "Raridade": "Rarity", "Custo": "Cost", "Partidas no deck": "Matches in deck", "Partidas vista": "Matches seen",
-  "Jogos vista": "Games seen", "% V quando vista": "Win % when seen", "Sua % V contra": "Your win % against",
+  "Carta": "Card", "Raridade": "Rarity",
 
   // oponentes
   "Sua taxa de vitória contra cada combinação de cores": "Your win rate against each color combination",
